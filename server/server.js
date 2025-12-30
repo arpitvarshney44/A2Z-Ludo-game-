@@ -25,10 +25,31 @@ dotenv.config();
 
 const app = express();
 const httpServer = createServer(app);
+
+// Parse allowed origins from environment variables
+const getAllowedOrigins = () => {
+  const origins = [];
+  
+  if (process.env.CLIENT_URL) {
+    // Split by comma and trim whitespace
+    const clientUrls = process.env.CLIENT_URL.split(',').map(url => url.trim());
+    origins.push(...clientUrls);
+  }
+  
+  if (process.env.ADMIN_URL) {
+    const adminUrls = process.env.ADMIN_URL.split(',').map(url => url.trim());
+    origins.push(...adminUrls);
+  }
+  
+  return origins;
+};
+
+const allowedOrigins = getAllowedOrigins();
+
 const io = new Server(httpServer, {
   cors: {
-    origin: [process.env.CLIENT_URL, process.env.ADMIN_URL],
-    methods: ['GET', 'POST'],
+    origin: allowedOrigins,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     credentials: true
   }
 });
@@ -43,8 +64,21 @@ initializeDefaultConfigs();
 app.use(helmet());
 app.use(compression());
 app.use(cors({
-  origin: [process.env.CLIENT_URL, process.env.ADMIN_URL],
-  credentials: true
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      console.log('Allowed origins:', allowedOrigins);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -80,6 +114,7 @@ const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV}`);
+  console.log(`Allowed CORS origins:`, allowedOrigins);
 });
 
 export { io };
