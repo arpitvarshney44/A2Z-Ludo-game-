@@ -73,6 +73,13 @@ export const uploadAvatar = async (req, res) => {
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
+    console.log('File received:', {
+      originalname: req.file.originalname,
+      mimetype: req.file.mimetype,
+      size: req.file.size,
+      path: req.file.path
+    });
+
     const user = await User.findById(req.user._id);
 
     // Check if Cloudinary is configured
@@ -82,22 +89,26 @@ export const uploadAvatar = async (req, res) => {
         try {
           const publicId = user.avatar.split('/').slice(-2).join('/').split('.')[0];
           await cloudinary.uploader.destroy(publicId);
+          console.log('Old avatar deleted from Cloudinary');
         } catch (err) {
           console.log('Failed to delete old avatar:', err.message);
         }
       }
 
-      // Upload new avatar to Cloudinary
+      // Upload new avatar to Cloudinary with optimization
+      console.log('Uploading to Cloudinary...');
       const result = await cloudinary.uploader.upload(req.file.path, {
         folder: 'a2z-ludo/avatars',
         public_id: `user_${user._id}_${Date.now()}`,
-        width: 300,
-        height: 300,
-        crop: 'fill',
-        gravity: 'face',
-        quality: 'auto:good',
-        format: 'webp'
+        transformation: [
+          { width: 400, height: 400, crop: 'fill', gravity: 'face' },
+          { quality: 'auto:good' },
+          { fetch_format: 'auto' }
+        ],
+        resource_type: 'image'
       });
+
+      console.log('Upload successful:', result.secure_url);
 
       // Delete temp file
       fs.unlink(req.file.path, (err) => {
@@ -106,8 +117,14 @@ export const uploadAvatar = async (req, res) => {
 
       user.avatar = result.secure_url;
     } else {
+      console.log('Cloudinary not configured, using placeholder');
       // Development fallback - use local file or placeholder
-      user.avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || 'User')}&size=300&background=random`;
+      user.avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || 'User')}&size=400&background=random`;
+      
+      // Delete temp file
+      fs.unlink(req.file.path, (err) => {
+        if (err) console.log('Failed to delete temp file:', err.message);
+      });
     }
 
     await user.save();
@@ -121,7 +138,9 @@ export const uploadAvatar = async (req, res) => {
     
     // Clean up temp file on error
     if (req.file?.path) {
-      fs.unlink(req.file.path, () => {});
+      fs.unlink(req.file.path, (err) => {
+        if (err) console.log('Failed to delete temp file on error:', err.message);
+      });
     }
     
     res.status(500).json({ message: 'Failed to upload avatar', error: error.message });

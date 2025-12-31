@@ -1,7 +1,6 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
-import OTP from '../models/OTP.js';
-import { sendOTP } from '../config/twilio.js';
+import AppConfig from '../models/AppConfig.js';
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -10,20 +9,19 @@ const generateToken = (id) => {
   });
 };
 
-// Generate OTP
-const generateOTP = () => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-};
-
-// @desc    Send OTP to phone number
-// @route   POST /api/auth/send-otp
+// @desc    Register new user
+// @route   POST /api/auth/register
 // @access  Public
-export const sendOTPController = async (req, res) => {
+export const register = async (req, res) => {
   try {
-    const { phoneNumber } = req.body;
+    const { phoneNumber, password, referralCode } = req.body;
 
-    if (!phoneNumber) {
-      return res.status(400).json({ message: 'Phone number is required' });
+    if (!phoneNumber || !password) {
+      return res.status(400).json({ message: 'Phone number and password are required' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters long' });
     }
 
     // Validate phone number format (basic validation)
@@ -32,126 +30,52 @@ export const sendOTPController = async (req, res) => {
       return res.status(400).json({ message: 'Invalid phone number format' });
     }
 
-    // Delete any existing OTPs for this phone number
-    await OTP.deleteMany({ phoneNumber });
+    // Check if user already exists
+    const existingUser = await User.findOne({ phoneNumber });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Phone number already registered' });
+    }
 
-    // Generate new OTP
-    const otp = generateOTP();
+    // Generate unique referral code
+    let referralCodeGenerated;
+    let isUnique = false;
+    while (!isUnique) {
+      referralCodeGenerated = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const existingCode = await User.findOne({ referralCode: referralCodeGenerated });
+      if (!existingCode) {
+        isUnique = true;
+      }
+    }
 
-    // Save OTP to database
-    await OTP.create({
+    // Get signup bonus from config
+    const signupBonusConfig = await AppConfig.findOne({ key: 'signupBonus' });
+    const signupBonus = signupBonusConfig ? signupBonusConfig.value : 50;
+
+    // Create new user
+    const user = await User.create({
       phoneNumber,
-      otp
+      password,
+      referralCode: referralCodeGenerated,
+      referredBy: referralCode || null,
+      bonusCash: signupBonus // Welcome bonus from config
     });
 
-    // Send OTP via Twilio (in development, you might want to skip this)
-    if (process.env.NODE_ENV === 'production') {
-      await sendOTP(phoneNumber, otp);
-    } else {
-      console.log(`OTP for ${phoneNumber}: ${otp}`);
-    }
-
-    res.status(200).json({
-      message: 'OTP sent successfully',
-      ...(process.env.NODE_ENV === 'development' && { otp }) // Only send OTP in response during development
-    });
-  } catch (error) {
-    console.error('Send OTP Error:', error);
-    res.status(500).json({ message: 'Failed to send OTP', error: error.message });
-  }
-};
-
-// @desc    Verify OTP and login/register
-// @route   POST /api/auth/verify-otp
-// @access  Public
-export const verifyOTPController = async (req, res) => {
-  try {
-    const { phoneNumber, otp, referralCode, deviceInfo } = req.body;
-
-    if (!phoneNumber || !otp) {
-      return res.status(400).json({ message: 'Phone number and OTP are required' });
-    }
-
-    // Find OTP record
-    const otpRecord = await OTP.findOne({ phoneNumber, otp });
-
-    if (!otpRecord) {
-      return res.status(400).json({ message: 'Invalid OTP' });
-    }
-
-    // Check if OTP is already verified
-    if (otpRecord.verified) {
-      return res.status(400).json({ message: 'OTP already used' });
-    }
-
-    // Check OTP attempts
-    if (otpRecord.attempts >= 3) {
-      return res.status(400).json({ message: 'Too many failed attempts. Please request a new OTP' });
-    }
-
-    // Mark OTP as verified
-    otpRecord.verified = true;
-    await otpRecord.save();
-
-    // Check if user exists
-    let user = await User.findOne({ phoneNumber });
-    let isNewUser = false;
-
-    if (!user) {
-      // Create new user
-      isNewUser = true;
-      
-      // Generate unique referral code
-      let referralCodeGenerated;
-      let isUnique = false;
-      while (!isUnique) {
-        referralCodeGenerated = Math.random().toString(36).substring(2, 8).toUpperCase();
-        const existingUser = await User.findOne({ referralCode: referralCodeGenerated });
-        if (!existingUser) {
-          isUnique = true;
-        }
+    // If referred by someone, add bonus to referrer
+    if (referralCode) {
+      const referrer = await User.findOne({ referralCode });
+      if (referrer) {
+        referrer.referralEarnings += 25;
+        referrer.bonusCash += 25;
+        referrer.referredUsers.push(user._id);
+        await referrer.save();
       }
-      
-      user = await User.create({
-        phoneNumber,
-        referralCode: referralCodeGenerated,
-        referredBy: referralCode || null,
-        deviceInfo: deviceInfo || {},
-        bonusCash: 50 // Welcome bonus
-      });
-
-      // If referred by someone, add bonus to referrer
-      if (referralCode) {
-        const referrer = await User.findOne({ referralCode });
-        if (referrer) {
-          referrer.referralEarnings += 25;
-          referrer.bonusCash += 25;
-          referrer.referredUsers.push(user._id);
-          await referrer.save();
-        }
-      }
-    } else {
-      // Check if user is blocked
-      if (user.isBlocked) {
-        return res.status(403).json({ 
-          message: 'Your account has been blocked. Please contact support for assistance.' 
-        });
-      }
-
-      // Update last login and device info
-      user.lastLogin = new Date();
-      if (deviceInfo) {
-        user.deviceInfo = deviceInfo;
-      }
-      await user.save();
     }
 
     // Generate token
     const token = generateToken(user._id);
 
-    res.status(200).json({
-      message: isNewUser ? 'Registration successful' : 'Login successful',
-      isNewUser,
+    res.status(201).json({
+      message: 'Registration successful',
       token,
       user: {
         id: user._id,
@@ -168,8 +92,70 @@ export const verifyOTPController = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Verify OTP Error:', error);
-    res.status(500).json({ message: 'Failed to verify OTP', error: error.message });
+    console.error('Register Error:', error);
+    res.status(500).json({ message: 'Failed to register', error: error.message });
+  }
+};
+
+// @desc    Login user
+// @route   POST /api/auth/login
+// @access  Public
+export const login = async (req, res) => {
+  try {
+    const { phoneNumber, password } = req.body;
+
+    if (!phoneNumber || !password) {
+      return res.status(400).json({ message: 'Phone number and password are required' });
+    }
+
+    // Find user by phone number
+    const user = await User.findOne({ phoneNumber });
+
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid phone number or password' });
+    }
+
+    // Check if user is blocked
+    if (user.isBlocked) {
+      return res.status(403).json({ 
+        message: 'Your account has been blocked. Please contact support for assistance.' 
+      });
+    }
+
+    // Verify password
+    const isPasswordValid = await user.comparePassword(password);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: 'Invalid phone number or password' });
+    }
+
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
+
+    // Generate token
+    const token = generateToken(user._id);
+
+    res.status(200).json({
+      message: 'Login successful',
+      token,
+      user: {
+        id: user._id,
+        phoneNumber: user.phoneNumber,
+        email: user.email,
+        username: user.username,
+        avatar: user.avatar,
+        referralCode: user.referralCode,
+        depositCash: user.depositCash,
+        winningCash: user.winningCash,
+        bonusCash: user.bonusCash,
+        totalBalance: user.getTotalBalance(),
+        isKYCVerified: user.isKYCVerified
+      }
+    });
+  } catch (error) {
+    console.error('Login Error:', error);
+    res.status(500).json({ message: 'Failed to login', error: error.message });
   }
 };
 

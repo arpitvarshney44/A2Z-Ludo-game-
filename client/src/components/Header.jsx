@@ -21,9 +21,7 @@ const Header = () => {
           </button>
 
           <Link to="/" className="flex items-center gap-2 flex-1 justify-center">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-lg sm:text-xl">🎲</span>
-            </div>
+            <img src="/logo.png" alt="A2Z LUDO" className="w-9 h-9 sm:w-10 sm:h-10 object-contain" />
             <div className="flex flex-col">
               <span className="text-white font-black text-base sm:text-lg leading-none">A2Z LUDO</span>
               <span className="text-yellow-400 font-bold text-[10px] sm:text-xs leading-none">Turn Fun Into Funds</span>

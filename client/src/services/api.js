@@ -45,9 +45,10 @@ api.interceptors.response.use(
 
 // Auth APIs
 export const authAPI = {
-  sendOTP: (phoneNumber) => api.post('/auth/send-otp', { phoneNumber }),
-  verifyOTP: (phoneNumber, otp, referralCode, deviceInfo) => 
-    api.post('/auth/verify-otp', { phoneNumber, otp, referralCode, deviceInfo }),
+  register: (phoneNumber, password, referralCode) => 
+    api.post('/auth/register', { phoneNumber, password, referralCode }),
+  login: (phoneNumber, password) => 
+    api.post('/auth/login', { phoneNumber, password }),
   getMe: () => api.get('/auth/me'),
   logout: () => api.post('/auth/logout'),
 };

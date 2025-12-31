@@ -18,7 +18,8 @@ const Settings = () => {
   });
   const [gameSettings, setGameSettings] = useState({
     commissionRate: 5,
-    referralBonus: 50
+    referralBonus: 50,
+    signupBonus: 50
   });
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -47,7 +48,7 @@ const Settings = () => {
       const adminStorage = localStorage.getItem('admin-storage');
       const token = adminStorage ? JSON.parse(adminStorage).state.token : null;
       
-      const [commissionRes, referralRes] = await Promise.all([
+      const [commissionRes, referralRes, signupRes] = await Promise.all([
         axios.get('/config/commissionRate', {
           baseURL: import.meta.env.VITE_API_URL,
           headers: { Authorization: `Bearer ${token}` }
@@ -55,12 +56,17 @@ const Settings = () => {
         axios.get('/config/referralBonus', {
           baseURL: import.meta.env.VITE_API_URL,
           headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get('/config/signupBonus', {
+          baseURL: import.meta.env.VITE_API_URL,
+          headers: { Authorization: `Bearer ${token}` }
         })
       ]);
 
       setGameSettings({
         commissionRate: commissionRes.data.data?.value || 5,
-        referralBonus: referralRes.data.data?.value || 50
+        referralBonus: referralRes.data.data?.value || 50,
+        signupBonus: signupRes.data.data?.value || 50
       });
     } catch (error) {
       console.error('Failed to fetch game settings');
@@ -186,6 +192,19 @@ const Settings = () => {
             key: 'referralBonus',
             value: gameSettings.referralBonus,
             description: 'Referral bonus amount in rupees',
+            category: 'referral'
+          },
+          {
+            baseURL: import.meta.env.VITE_API_URL,
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        ),
+        axios.put(
+          '/config',
+          {
+            key: 'signupBonus',
+            value: gameSettings.signupBonus,
+            description: 'Signup bonus amount in rupees for new users',
             category: 'referral'
           },
           {
@@ -340,7 +359,7 @@ const Settings = () => {
         </div>
 
         <div className="p-4 lg:p-6 space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
             <div>
               <label className="block text-gray-400 text-sm mb-2 font-semibold">Commission Rate (%)</label>
               <input
@@ -367,6 +386,20 @@ const Settings = () => {
                 className="w-full bg-gray-700 text-white px-4 py-3 rounded-lg outline-none border border-gray-600 focus:border-purple-500"
               />
               <p className="text-gray-500 text-xs mt-1">Bonus amount for successful referrals</p>
+            </div>
+
+            <div>
+              <label className="block text-gray-400 text-sm mb-2 font-semibold flex items-center gap-2">
+                <FaGift className="text-green-400" /> Signup Bonus (₹)
+              </label>
+              <input
+                type="number"
+                value={gameSettings.signupBonus}
+                onChange={(e) => handleGameChange('signupBonus', e.target.value)}
+                min="0"
+                className="w-full bg-gray-700 text-white px-4 py-3 rounded-lg outline-none border border-gray-600 focus:border-purple-500"
+              />
+              <p className="text-gray-500 text-xs mt-1">Bonus amount for new user registration</p>
             </div>
           </div>
 

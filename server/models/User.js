@@ -8,20 +8,21 @@ const userSchema = new mongoose.Schema({
     unique: true,
     trim: true
   },
+  password: {
+    type: String,
+    required: true,
+    minlength: 6
+  },
   email: {
     type: String,
     trim: true,
     lowercase: true,
-    default: null,
-    sparse: true,
-    unique: true
+    default: null
   },
   username: {
     type: String,
     trim: true,
-    default: null,
-    sparse: true,
-    unique: true
+    default: null
   },
   avatar: {
     type: String,
@@ -128,6 +129,13 @@ const userSchema = new mongoose.Schema({
 
 // Generate referral code before saving
 userSchema.pre('save', async function(next) {
+  // Hash password if modified
+  if (this.isModified('password')) {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+  }
+
+  // Generate referral code if not exists
   if (!this.referralCode) {
     let code;
     let isUnique = false;
@@ -145,6 +153,11 @@ userSchema.pre('save', async function(next) {
   }
   next();
 });
+
+// Method to compare password
+userSchema.methods.comparePassword = async function(enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
 
 // Method to calculate total balance
 userSchema.methods.getTotalBalance = function() {
@@ -192,6 +205,10 @@ userSchema.methods.addWinning = async function(amount) {
   this.totalCoinsWon += amount;
   await this.save();
 };
+
+// Create sparse indexes for email and username
+userSchema.index({ email: 1 }, { unique: true, sparse: true });
+userSchema.index({ username: 1 }, { unique: true, sparse: true });
 
 const User = mongoose.model('User', userSchema);
 

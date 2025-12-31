@@ -31,7 +31,8 @@ export const getPublicConfig = async (req, res) => {
         // Return default values if not found
         const defaults = {
           commissionRate: 5,
-          referralBonus: 50
+          referralBonus: 50,
+          signupBonus: 50
         };
         return res.json({ success: true, data: { key, value: defaults[key] || 0 } });
       }
@@ -94,7 +95,8 @@ export const initializeDefaultConfigs = async () => {
   try {
     const defaults = [
       { key: 'commissionRate', value: 5, description: 'Game commission rate in percentage', category: 'game' },
-      { key: 'referralBonus', value: 50, description: 'Referral bonus amount in rupees', category: 'referral' }
+      { key: 'referralBonus', value: 50, description: 'Referral bonus amount in rupees', category: 'referral' },
+      { key: 'signupBonus', value: 50, description: 'Signup bonus amount in rupees for new users', category: 'referral' }
     ];
 
     for (const config of defaults) {
