@@ -32,9 +32,10 @@ export const getPublicConfig = async (req, res) => {
         const defaults = {
           commissionRate: 5,
           referralBonus: 50,
-          signupBonus: 50
+          signupBonus: 50,
+          noticeBoard: '⚡ 5% Commission • 3% Referral • 24/7 Withdrawal • WhatsApp Support 📞'
         };
-        return res.json({ success: true, data: { key, value: defaults[key] || 0 } });
+        return res.json({ success: true, data: { key, value: defaults[key] || '' } });
       }
       return res.json({ success: true, data: config });
     }
@@ -96,7 +97,8 @@ export const initializeDefaultConfigs = async () => {
     const defaults = [
       { key: 'commissionRate', value: 5, description: 'Game commission rate in percentage', category: 'game' },
       { key: 'referralBonus', value: 50, description: 'Referral bonus amount in rupees', category: 'referral' },
-      { key: 'signupBonus', value: 50, description: 'Signup bonus amount in rupees for new users', category: 'referral' }
+      { key: 'signupBonus', value: 50, description: 'Signup bonus amount in rupees for new users', category: 'referral' },
+      { key: 'noticeBoard', value: '⚡ 5% Commission • 3% Referral • 24/7 Withdrawal • WhatsApp Support 📞', description: 'Notice board text displayed on home page', category: 'general' }
     ];
 
     for (const config of defaults) {

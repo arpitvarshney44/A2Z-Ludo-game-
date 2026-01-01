@@ -19,7 +19,8 @@ const Settings = () => {
   const [gameSettings, setGameSettings] = useState({
     commissionRate: 5,
     referralBonus: 50,
-    signupBonus: 50
+    signupBonus: 50,
+    noticeBoard: ''
   });
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -48,7 +49,7 @@ const Settings = () => {
       const adminStorage = localStorage.getItem('admin-storage');
       const token = adminStorage ? JSON.parse(adminStorage).state.token : null;
       
-      const [commissionRes, referralRes, signupRes] = await Promise.all([
+      const [commissionRes, referralRes, signupRes, noticeRes] = await Promise.all([
         axios.get('/config/commissionRate', {
           baseURL: import.meta.env.VITE_API_URL,
           headers: { Authorization: `Bearer ${token}` }
@@ -60,13 +61,18 @@ const Settings = () => {
         axios.get('/config/signupBonus', {
           baseURL: import.meta.env.VITE_API_URL,
           headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get('/config/noticeBoard', {
+          baseURL: import.meta.env.VITE_API_URL,
+          headers: { Authorization: `Bearer ${token}` }
         })
       ]);
 
       setGameSettings({
         commissionRate: commissionRes.data.data?.value || 5,
         referralBonus: referralRes.data.data?.value || 50,
-        signupBonus: signupRes.data.data?.value || 50
+        signupBonus: signupRes.data.data?.value || 50,
+        noticeBoard: noticeRes.data.data?.value || ''
       });
     } catch (error) {
       console.error('Failed to fetch game settings');
@@ -206,6 +212,19 @@ const Settings = () => {
             value: gameSettings.signupBonus,
             description: 'Signup bonus amount in rupees for new users',
             category: 'referral'
+          },
+          {
+            baseURL: import.meta.env.VITE_API_URL,
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        ),
+        axios.put(
+          '/config',
+          {
+            key: 'noticeBoard',
+            value: gameSettings.noticeBoard,
+            description: 'Notice board text displayed on home page',
+            category: 'general'
           },
           {
             baseURL: import.meta.env.VITE_API_URL,
@@ -401,6 +420,17 @@ const Settings = () => {
               />
               <p className="text-gray-500 text-xs mt-1">Bonus amount for new user registration</p>
             </div>
+          </div>
+
+          <div>
+            <label className="block text-gray-400 text-sm mb-2 font-semibold">Notice Board Text</label>
+            <textarea
+              value={gameSettings.noticeBoard}
+              onChange={(e) => setGameSettings(prev => ({ ...prev, noticeBoard: e.target.value }))}
+              placeholder="Enter notice board text..."
+              className="w-full bg-gray-700 text-white px-4 py-3 rounded-lg outline-none border border-gray-600 focus:border-purple-500 min-h-[100px]"
+            />
+            <p className="text-gray-500 text-xs mt-1">Text displayed in green notice box on home page</p>
           </div>
 
           <button

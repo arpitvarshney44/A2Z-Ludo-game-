@@ -13,8 +13,6 @@ import Refer from './pages/Refer';
 import Support from './pages/Support';
 import Profile from './pages/Profile';
 import GameLobby from './pages/GameLobby';
-import GamePlay from './pages/GamePlay';
-import Game from './pages/Game';
 import Transactions from './pages/Transactions';
 import KYC from './pages/KYC';
 import PrivacyPolicy from './pages/PrivacyPolicy';
@@ -79,9 +77,6 @@ function App() {
           <Route path="/about" element={isAuthenticated ? <About /> : <Navigate to="/login" />} />
           <Route path="/contact" element={isAuthenticated ? <Contact /> : <Navigate to="/login" />} />
         </Route>
-        
-        <Route path="/game/:roomCode" element={isAuthenticated ? <Game /> : <Navigate to="/login" />} />
-        <Route path="/gameplay/:roomCode" element={isAuthenticated ? <GamePlay /> : <Navigate to="/login" />} />
         
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>

@@ -4,12 +4,10 @@ import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import { createServer } from 'http';
-import { Server } from 'socket.io';
 import connectDB from './config/database.js';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import walletRoutes from './routes/walletRoutes.js';
-import gameRoutes from './routes/gameRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import referralRoutes from './routes/referralRoutes.js';
 import supportRoutes from './routes/supportRoutes.js';
@@ -17,7 +15,6 @@ import kycRoutes from './routes/kycRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import configRoutes from './routes/configRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
-import { initializeSocketHandlers } from './socket/gameSocket.js';
 import { getPublicPolicy } from './controllers/adminController.js';
 import { initializeDefaultConfigs } from './controllers/configController.js';
 
@@ -45,14 +42,6 @@ const getAllowedOrigins = () => {
 };
 
 const allowedOrigins = getAllowedOrigins();
-
-const io = new Server(httpServer, {
-  cors: {
-    origin: allowedOrigins,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    credentials: true
-  }
-});
 
 // Connect to MongoDB
 connectDB();
@@ -87,7 +76,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/wallet', walletRoutes);
-app.use('/api/game', gameRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/referral', referralRoutes);
 app.use('/api/support', supportRoutes);
@@ -103,9 +91,6 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Server is running' });
 });
 
-// Socket.IO initialization
-initializeSocketHandlers(io);
-
 // Error handler
 app.use(errorHandler);
 
@@ -117,4 +102,4 @@ httpServer.listen(PORT, () => {
   console.log(`Allowed CORS origins:`, allowedOrigins);
 });
 
-export { io };
+export default app;

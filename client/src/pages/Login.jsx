@@ -103,11 +103,11 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black flex flex-col items-center justify-center p-6 relative overflow-hidden">
+    <div className="min-h-screen bg-[#e8f5d0] flex flex-col items-center justify-center p-6 relative overflow-hidden">
       {/* Subtle Background Pattern */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute top-20 left-10 w-64 h-64 bg-purple-500 rounded-full filter blur-3xl"></div>
-        <div className="absolute bottom-20 right-10 w-64 h-64 bg-blue-500 rounded-full filter blur-3xl"></div>
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute top-20 left-10 w-64 h-64 bg-green-400 rounded-full filter blur-3xl"></div>
+        <div className="absolute bottom-20 right-10 w-64 h-64 bg-blue-400 rounded-full filter blur-3xl"></div>
       </div>
 
       <motion.div
@@ -125,10 +125,10 @@ const Login = () => {
           >
             <img src="/logo.png" alt="A2Z LUDO" className="w-20 h-20 object-contain" />
           </motion.div>
-          <h1 className="text-4xl font-black text-white mb-2">
+          <h1 className="text-4xl font-black text-gray-800 mb-2">
             A2Z LUDO
           </h1>
-          <p className="text-gray-400 text-lg">
+          <p className="text-gray-600 text-lg font-semibold">
             Turn Fun Into Funds
           </p>
         </div>
@@ -138,17 +138,17 @@ const Login = () => {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="bg-gray-800/50 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-gray-700"
+          className="bg-white rounded-3xl p-8 shadow-2xl border-2 border-gray-200"
         >
           {/* Toggle Buttons */}
-          <div className="flex gap-2 mb-6 bg-gray-700/50 p-1 rounded-xl">
+          <div className="flex gap-2 mb-6 bg-gray-100 p-1 rounded-xl">
             <button
               type="button"
               onClick={() => setIsLogin(true)}
               className={`flex-1 py-3 rounded-lg font-semibold transition-all ${
                 isLogin 
                   ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg' 
-                  : 'text-gray-400 hover:text-white'
+                  : 'text-gray-600 hover:text-gray-800'
               }`}
             >
               Login
@@ -159,7 +159,7 @@ const Login = () => {
               className={`flex-1 py-3 rounded-lg font-semibold transition-all ${
                 !isLogin 
                   ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg' 
-                  : 'text-gray-400 hover:text-white'
+                  : 'text-gray-600 hover:text-gray-800'
               }`}
             >
               Sign Up
@@ -167,32 +167,32 @@ const Login = () => {
           </div>
 
           <form onSubmit={isLogin ? handleLogin : handleRegister}>
-            <h2 className="text-2xl font-bold text-white mb-2">
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">
               {isLogin ? 'Welcome Back' : 'Create Account'}
             </h2>
-            <p className="text-gray-400 mb-6">
+            <p className="text-gray-600 mb-6">
               {isLogin ? 'Login to continue playing' : 'Sign up to start winning'}
             </p>
             
             <div className="mb-4">
-              <label className="block text-gray-300 mb-2 font-medium text-sm">
+              <label className="block text-gray-700 mb-2 font-medium text-sm">
                 Mobile Number
               </label>
-              <div className="flex items-center bg-gray-700/50 rounded-xl overflow-hidden border border-gray-600 focus-within:border-orange-500 transition-colors">
-                <span className="px-4 text-gray-300 font-semibold">+91</span>
+              <div className="flex items-center bg-gray-50 rounded-xl overflow-hidden border-2 border-gray-300 focus-within:border-orange-500 transition-colors">
+                <span className="px-4 text-gray-700 font-semibold">+91</span>
                 <input
                   type="tel"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
                   placeholder="Enter 10-digit number"
-                  className="flex-1 bg-transparent px-4 py-4 text-white outline-none placeholder-gray-500"
+                  className="flex-1 bg-transparent px-4 py-4 text-gray-800 outline-none placeholder-gray-400"
                   required
                 />
               </div>
             </div>
 
             <div className="mb-4">
-              <label className="block text-gray-300 mb-2 font-medium text-sm">
+              <label className="block text-gray-700 mb-2 font-medium text-sm">
                 Password
               </label>
               <div className="relative">
@@ -201,14 +201,14 @@ const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter password (min 6 characters)"
-                  className="w-full bg-gray-700/50 border border-gray-600 px-4 py-4 pr-12 rounded-xl text-white outline-none focus:border-orange-500 transition-colors placeholder-gray-500"
+                  className="w-full bg-gray-50 border-2 border-gray-300 px-4 py-4 pr-12 rounded-xl text-gray-800 outline-none focus:border-orange-500 transition-colors placeholder-gray-400"
                   required
                   minLength={6}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-800 transition-colors"
                 >
                   {showPassword ? <FaEyeSlash /> : <FaEye />}
                 </button>
@@ -218,7 +218,7 @@ const Login = () => {
             {!isLogin && (
               <>
                 <div className="mb-4">
-                  <label className="block text-gray-300 mb-2 font-medium text-sm">
+                  <label className="block text-gray-700 mb-2 font-medium text-sm">
                     Confirm Password
                   </label>
                   <div className="relative">
@@ -227,14 +227,14 @@ const Login = () => {
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="Confirm your password"
-                      className="w-full bg-gray-700/50 border border-gray-600 px-4 py-4 pr-12 rounded-xl text-white outline-none focus:border-orange-500 transition-colors placeholder-gray-500"
+                      className="w-full bg-gray-50 border-2 border-gray-300 px-4 py-4 pr-12 rounded-xl text-gray-800 outline-none focus:border-orange-500 transition-colors placeholder-gray-400"
                       required
                       minLength={6}
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-800 transition-colors"
                     >
                       {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
                     </button>
@@ -242,7 +242,7 @@ const Login = () => {
                 </div>
 
                 <div className="mb-6">
-                  <label className="block text-gray-300 mb-2 font-medium text-sm">
+                  <label className="block text-gray-700 mb-2 font-medium text-sm">
                     Referral Code (Optional)
                   </label>
                   <input
@@ -250,7 +250,7 @@ const Login = () => {
                     value={referralCode}
                     onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
                     placeholder="Enter referral code"
-                    className="w-full bg-gray-700/50 border border-gray-600 px-4 py-4 rounded-xl text-white outline-none focus:border-orange-500 transition-colors placeholder-gray-500"
+                    className="w-full bg-gray-50 border-2 border-gray-300 px-4 py-4 rounded-xl text-gray-800 outline-none focus:border-orange-500 transition-colors placeholder-gray-400"
                   />
                 </div>
               </>
@@ -278,7 +278,7 @@ const Login = () => {
           </motion.div>
         )}
 
-        <p className="text-center text-gray-500 text-sm mt-6">
+        <p className="text-center text-gray-600 text-sm mt-6 font-medium">
           By continuing, you agree to our Terms & Privacy Policy
         </p>
       </motion.div>

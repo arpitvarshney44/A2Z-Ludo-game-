@@ -14,6 +14,7 @@ const GameLobby = () => {
   const [openBattles, setOpenBattles] = useState([]);
   const [runningBattles, setRunningBattles] = useState([]);
   const [showRules, setShowRules] = useState(false);
+  const [showComingSoon, setShowComingSoon] = useState(false);
   const [commissionRate, setCommissionRate] = useState(5);
 
   useEffect(() => {
@@ -53,136 +54,193 @@ const GameLobby = () => {
       return;
     }
 
-    setLoading(true);
-    try {
-      const response = await gameAPI.createGame('classic', amount, 2);
-      const roomCode = response.data.game.roomCode;
-      toast.success('Battle created successfully!');
-      setEntryAmount('');
-      
-      // Navigate to the game immediately after creating
-      navigate(`/game/${roomCode}`);
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to create battle');
-    } finally {
-      setLoading(false);
-    }
+    // Show coming soon popup instead of creating battle
+    setShowComingSoon(true);
   };
 
   const handleJoinBattle = async (roomCode) => {
-    try {
-      await gameAPI.joinGame(roomCode);
-      toast.success('Joined battle successfully!');
-      navigate(`/game/${roomCode}`);
-    } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Failed to join battle';
-      toast.error(errorMessage);
-    }
+    // Show coming soon popup instead of joining battle
+    setShowComingSoon(true);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4 pb-24">
+    <div className="min-h-screen bg-[#e8f5d0] p-4 pb-24">
+      {/* Coming Soon Modal */}
+      {showComingSoon && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            className="bg-gradient-to-br from-purple-900 via-pink-900 to-orange-900 rounded-3xl p-8 max-w-md w-full border-4 border-yellow-400 shadow-2xl relative overflow-hidden"
+          >
+            {/* Animated Background */}
+            <div className="absolute inset-0 opacity-20">
+              <div className="absolute top-10 left-10 w-32 h-32 bg-yellow-400 rounded-full filter blur-3xl animate-pulse"></div>
+              <div className="absolute bottom-10 right-10 w-32 h-32 bg-pink-400 rounded-full filter blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+            </div>
+
+            <div className="relative z-10 text-center">
+              <motion.div
+                animate={{ 
+                  rotate: [0, 10, -10, 10, 0],
+                  scale: [1, 1.1, 1, 1.1, 1]
+                }}
+                transition={{ 
+                  duration: 2,
+                  repeat: Infinity,
+                  repeatDelay: 1
+                }}
+                className="text-8xl mb-6"
+              >
+                🎲
+              </motion.div>
+
+              <h2 className="text-4xl font-black text-white mb-4 drop-shadow-lg">
+                Coming Soon!
+              </h2>
+              
+              <p className="text-yellow-300 text-lg font-bold mb-6 leading-relaxed">
+                Ludo game is under development. Get ready for an amazing gaming experience!
+              </p>
+
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 mb-6 border border-white/20">
+                <p className="text-white text-sm font-semibold mb-2">🚀 What's Coming:</p>
+                <ul className="text-left text-white/90 text-sm space-y-2">
+                  <li className="flex items-center gap-2">
+                    <span className="text-green-400">✓</span>
+                    <span>Smooth gameplay experience</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-green-400">✓</span>
+                    <span>Real-time multiplayer battles</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-green-400">✓</span>
+                    <span>Fair play & instant rewards</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-green-400">✓</span>
+                    <span>Exciting tournaments</span>
+                  </li>
+                </ul>
+              </div>
+
+              <button
+                onClick={() => setShowComingSoon(false)}
+                className="w-full bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-white font-black text-lg py-4 rounded-xl hover:scale-105 transition-all shadow-2xl"
+              >
+                Got It! 🎮
+              </button>
+
+              <p className="text-white/60 text-xs mt-4">
+                Stay tuned for updates!
+              </p>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
       {/* Rules Modal */}
       {showRules && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-3xl p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto border-2 border-blue-500 shadow-2xl"
+            className="bg-white rounded-3xl p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto border-2 border-blue-500 shadow-2xl"
           >
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-black text-white flex items-center gap-2">
+              <h2 className="text-2xl font-black text-gray-800 flex items-center gap-2">
                 <span className="text-3xl">📜</span>
                 Game Rules
               </h2>
               <button
                 onClick={() => setShowRules(false)}
-                className="text-gray-400 hover:text-white text-2xl font-bold transition-all"
+                className="text-gray-500 hover:text-gray-800 text-2xl font-bold transition-all"
               >
                 ✕
               </button>
             </div>
 
-            <div className="space-y-4 text-gray-300">
-              <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
-                <h3 className="text-blue-400 font-bold text-lg mb-2 flex items-center gap-2">
+            <div className="space-y-4 text-gray-700">
+              <div className="bg-blue-50 border-2 border-blue-300 rounded-xl p-4">
+                <h3 className="text-blue-600 font-bold text-lg mb-2 flex items-center gap-2">
                   🎮 How to Play
                 </h3>
                 <ul className="space-y-2 text-sm">
                   <li className="flex gap-2">
-                    <span className="text-blue-400">•</span>
+                    <span className="text-blue-600">•</span>
                     <span>Create or join a battle with your desired entry amount</span>
                   </li>
                   <li className="flex gap-2">
-                    <span className="text-blue-400">•</span>
+                    <span className="text-blue-600">•</span>
                     <span>Wait for 2 players to join the battle</span>
                   </li>
                   <li className="flex gap-2">
-                    <span className="text-blue-400">•</span>
+                    <span className="text-blue-600">•</span>
                     <span>Roll the dice and move your tokens strategically</span>
                   </li>
                   <li className="flex gap-2">
-                    <span className="text-blue-400">•</span>
+                    <span className="text-blue-600">•</span>
                     <span>First player to get all 4 tokens home wins!</span>
                   </li>
                 </ul>
               </div>
 
-              <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4">
-                <h3 className="text-green-400 font-bold text-lg mb-2 flex items-center gap-2">
+              <div className="bg-green-50 border-2 border-green-300 rounded-xl p-4">
+                <h3 className="text-green-600 font-bold text-lg mb-2 flex items-center gap-2">
                   💰 Winning & Prizes
                 </h3>
                 <ul className="space-y-2 text-sm">
                   <li className="flex gap-2">
-                    <span className="text-green-400">•</span>
+                    <span className="text-green-600">•</span>
                     <span>Winner takes the entire prize pool (minus {commissionRate}% commission)</span>
                   </li>
                   <li className="flex gap-2">
-                    <span className="text-green-400">•</span>
+                    <span className="text-green-600">•</span>
                     <span>Prize = Entry Fee × 2 players × {((100 - commissionRate) / 100).toFixed(2)}</span>
                   </li>
                   <li className="flex gap-2">
-                    <span className="text-green-400">•</span>
+                    <span className="text-green-600">•</span>
                     <span>Instant withdrawal to your wallet</span>
                   </li>
                 </ul>
               </div>
 
-              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4">
-                <h3 className="text-yellow-400 font-bold text-lg mb-2 flex items-center gap-2">
+              <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-4">
+                <h3 className="text-yellow-600 font-bold text-lg mb-2 flex items-center gap-2">
                   ⚠️ Important Rules
                 </h3>
                 <ul className="space-y-2 text-sm">
                   <li className="flex gap-2">
-                    <span className="text-yellow-400">•</span>
+                    <span className="text-yellow-600">•</span>
                     <span>Minimum entry amount is ₹10</span>
                   </li>
                   <li className="flex gap-2">
-                    <span className="text-yellow-400">•</span>
+                    <span className="text-yellow-600">•</span>
                     <span>You must have sufficient balance to join</span>
                   </li>
                   <li className="flex gap-2">
-                    <span className="text-yellow-400">•</span>
+                    <span className="text-yellow-600">•</span>
                     <span>No refunds once the game starts</span>
                   </li>
                   <li className="flex gap-2">
-                    <span className="text-yellow-400">•</span>
+                    <span className="text-yellow-600">•</span>
                     <span>Fair play is mandatory - cheating leads to ban</span>
                   </li>
                 </ul>
               </div>
 
-              <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-4">
-                <h3 className="text-purple-400 font-bold text-lg mb-2 flex items-center gap-2">
+              <div className="bg-purple-50 border-2 border-purple-300 rounded-xl p-4">
+                <h3 className="text-purple-600 font-bold text-lg mb-2 flex items-center gap-2">
                   🎁 Referral Bonus
                 </h3>
                 <ul className="space-y-2 text-sm">
                   <li className="flex gap-2">
-                    <span className="text-purple-400">•</span>
+                    <span className="text-purple-600">•</span>
                     <span>Earn 3% commission on every friend's game</span>
                   </li>
                   <li className="flex gap-2">
-                    <span className="text-purple-400">•</span>
+                    <span className="text-purple-600">•</span>
                     <span>Share your referral code and start earning</span>
                   </li>
                 </ul>
@@ -237,10 +295,10 @@ const GameLobby = () => {
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.1 }}
-        className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-3xl p-6 mb-6 shadow-2xl border-2 border-gray-700"
+        className="bg-white rounded-3xl p-6 mb-6 shadow-lg border-2 border-gray-200"
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-black text-white flex items-center gap-2">
+          <h2 className="text-2xl font-black text-gray-800 flex items-center gap-2">
             <span className="text-3xl">⚔️</span>
             Create Battle
           </h2>
@@ -258,7 +316,7 @@ const GameLobby = () => {
             value={entryAmount}
             onChange={(e) => setEntryAmount(e.target.value)}
             placeholder="Enter amount"
-            className="w-full bg-gray-700 border-2 border-gray-600 pl-4 pr-20 sm:pr-24 py-3 rounded-xl text-white text-base outline-none focus:border-orange-500 transition-all placeholder-gray-400"
+            className="w-full bg-gray-100 border-2 border-gray-300 pl-4 pr-20 sm:pr-24 py-3 rounded-xl text-gray-800 text-base outline-none focus:border-orange-500 transition-all placeholder-gray-500"
           />
           <button
             onClick={handleCreateBattle}
@@ -274,7 +332,7 @@ const GameLobby = () => {
             <button
               key={amount}
               onClick={() => setEntryAmount(amount.toString())}
-              className="bg-gray-700 text-white py-3 rounded-xl font-bold hover:bg-gray-600 transition-all border border-gray-600"
+              className="bg-gray-200 text-gray-800 py-3 rounded-xl font-bold hover:bg-gray-300 transition-all border border-gray-300"
             >
               ₹{amount}
             </button>
@@ -299,8 +357,8 @@ const GameLobby = () => {
 
         <div className="space-y-3 mt-3">
           {openBattles.length === 0 ? (
-            <div className="bg-gray-800/50 backdrop-blur-xl p-8 rounded-2xl text-center border border-gray-700">
-              <p className="text-gray-400 text-lg">No open battles available</p>
+            <div className="bg-white p-8 rounded-2xl text-center border-2 border-gray-200 shadow-lg">
+              <p className="text-gray-600 text-lg font-bold">No open battles available</p>
               <p className="text-gray-500 text-sm mt-2">Create one to start playing!</p>
             </div>
           ) : (
@@ -371,8 +429,8 @@ const GameLobby = () => {
 
         <div className="space-y-3 mt-3">
           {runningBattles.length === 0 ? (
-            <div className="bg-gray-800/50 backdrop-blur-xl p-8 rounded-2xl text-center border border-gray-700">
-              <p className="text-gray-400 text-lg">No running battles</p>
+            <div className="bg-white p-8 rounded-2xl text-center border-2 border-gray-200 shadow-lg">
+              <p className="text-gray-600 text-lg font-bold">No running battles</p>
               <p className="text-gray-500 text-sm mt-2">Games will appear here once started</p>
             </div>
           ) : (

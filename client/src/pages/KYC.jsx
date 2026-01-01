@@ -118,8 +118,8 @@ const KYC = () => {
 
   const FileUploadBox = ({ type, label, icon: Icon, required = true, inputRef }) => (
     <div className="mb-4">
-      <label className="block text-gray-300 mb-2 text-sm font-medium">
-        {label} {required && <span className="text-red-400">*</span>}
+      <label className="block text-gray-700 mb-2 text-sm font-medium">
+        {label} {required && <span className="text-red-500">*</span>}
       </label>
       <input
         type="file"
@@ -138,11 +138,11 @@ const KYC = () => {
           <button
             type="button"
             onClick={() => removeFile(type)}
-            className="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-red-600"
+            className="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-red-600 shadow-lg"
           >
             <FaTimes />
           </button>
-          <div className="absolute bottom-2 left-2 bg-green-500 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
+          <div className="absolute bottom-2 left-2 bg-green-500 text-white px-2 py-1 rounded text-xs flex items-center gap-1 shadow-lg">
             <FaCheckCircle /> Uploaded
           </div>
         </div>
@@ -150,10 +150,10 @@ const KYC = () => {
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="w-full h-40 border-2 border-dashed border-gray-600 rounded-xl flex flex-col items-center justify-center gap-2 hover:border-blue-500 hover:bg-gray-800/50 transition-all"
+          className="w-full h-40 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center gap-2 hover:border-blue-500 hover:bg-blue-50 transition-all bg-gray-50"
         >
           <Icon className="text-3xl text-gray-400" />
-          <span className="text-gray-400 text-sm">Tap to upload</span>
+          <span className="text-gray-500 text-sm font-medium">Tap to upload</span>
         </button>
       )}
     </div>
@@ -161,8 +161,8 @@ const KYC = () => {
 
   if (checkingStatus) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4 pb-24 flex items-center justify-center">
-        <FaSpinner className="text-4xl text-white animate-spin" />
+      <div className="min-h-screen bg-[#e8f5d0] p-4 pb-24 flex items-center justify-center">
+        <FaSpinner className="text-4xl text-gray-800 animate-spin" />
       </div>
     );
   }
@@ -170,17 +170,17 @@ const KYC = () => {
   // Already verified
   if (user?.isKYCVerified) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4 pb-24 flex items-center justify-center">
+      <div className="min-h-screen bg-[#e8f5d0] p-4 pb-24 flex items-center justify-center">
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="text-center bg-gray-800/50 backdrop-blur-xl rounded-3xl p-8 border border-green-500"
+          className="text-center bg-white rounded-3xl p-8 border-2 border-green-500 shadow-xl"
         >
           <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <FaCheckCircle className="text-4xl text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">KYC Verified</h2>
-          <p className="text-gray-400">Your identity has been verified successfully</p>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">KYC Verified</h2>
+          <p className="text-gray-600">Your identity has been verified successfully</p>
         </motion.div>
       </div>
     );
@@ -189,18 +189,18 @@ const KYC = () => {
   // Pending verification
   if (kycStatus?.status === 'pending') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4 pb-24 flex items-center justify-center">
+      <div className="min-h-screen bg-[#e8f5d0] p-4 pb-24 flex items-center justify-center">
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="text-center bg-gray-800/50 backdrop-blur-xl rounded-3xl p-8 border border-yellow-500"
+          className="text-center bg-white rounded-3xl p-8 border-2 border-yellow-500 shadow-xl"
         >
           <div className="w-20 h-20 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <FaClock className="text-4xl text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">Verification Pending</h2>
-          <p className="text-gray-400 mb-2">Your documents are under review</p>
-          <p className="text-yellow-400 text-sm">Usually takes 24-48 hours</p>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Verification Pending</h2>
+          <p className="text-gray-600 mb-2">Your documents are under review</p>
+          <p className="text-yellow-600 text-sm font-semibold">Usually takes 24-48 hours</p>
         </motion.div>
       </div>
     );
@@ -209,17 +209,17 @@ const KYC = () => {
   // Rejected - allow resubmission
   if (kycStatus?.status === 'rejected') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4 pb-24">
+      <div className="min-h-screen bg-[#e8f5d0] p-4 pb-24">
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="bg-red-500/20 border border-red-500 rounded-2xl p-4 mb-6"
+          className="bg-red-50 border-2 border-red-400 rounded-2xl p-4 mb-6"
         >
           <div className="flex items-center gap-3 mb-2">
-            <FaTimesCircle className="text-red-400 text-xl" />
-            <h3 className="text-red-400 font-bold">KYC Rejected</h3>
+            <FaTimesCircle className="text-red-600 text-xl" />
+            <h3 className="text-red-600 font-bold">KYC Rejected</h3>
           </div>
-          <p className="text-gray-300 text-sm">{kycStatus.rejectionReason || 'Please resubmit with valid documents'}</p>
+          <p className="text-gray-700 text-sm">{kycStatus.rejectionReason || 'Please resubmit with valid documents'}</p>
         </motion.div>
         {renderForm()}
       </div>
@@ -231,43 +231,43 @@ const KYC = () => {
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="bg-gray-800/50 backdrop-blur-xl rounded-3xl p-6 border border-gray-700"
+        className="bg-white rounded-3xl p-6 border-2 border-gray-200 shadow-lg"
       >
         <form onSubmit={handleSubmit}>
           {/* Personal Info */}
-          <h3 className="text-white font-bold text-lg mb-4 flex items-center gap-2">
-            <FaUser className="text-blue-400" /> Personal Information
+          <h3 className="text-gray-800 font-bold text-lg mb-4 flex items-center gap-2">
+            <FaUser className="text-blue-500" /> Personal Information
           </h3>
           
           <div className="mb-4">
-            <label className="block text-gray-300 mb-2 text-sm font-medium">Full Name (as per document) <span className="text-red-400">*</span></label>
+            <label className="block text-gray-700 mb-2 text-sm font-medium">Full Name (as per document) <span className="text-red-500">*</span></label>
             <input
               type="text"
               value={formData.fullName}
               onChange={(e) => setFormData({...formData, fullName: e.target.value})}
-              className="w-full bg-gray-700 text-white px-4 py-3 rounded-xl outline-none border border-gray-600 focus:border-blue-500"
+              className="w-full bg-gray-50 text-gray-800 px-4 py-3 rounded-xl outline-none border-2 border-gray-300 focus:border-blue-500"
               placeholder="Enter your full name"
               required
             />
           </div>
 
           <div className="mb-4">
-            <label className="block text-gray-300 mb-2 text-sm font-medium">Date of Birth <span className="text-red-400">*</span></label>
+            <label className="block text-gray-700 mb-2 text-sm font-medium">Date of Birth <span className="text-red-500">*</span></label>
             <input
               type="date"
               value={formData.dateOfBirth}
               onChange={(e) => setFormData({...formData, dateOfBirth: e.target.value})}
-              className="w-full bg-gray-700 text-white px-4 py-3 rounded-xl outline-none border border-gray-600 focus:border-blue-500"
+              className="w-full bg-gray-50 text-gray-800 px-4 py-3 rounded-xl outline-none border-2 border-gray-300 focus:border-blue-500"
               required
             />
           </div>
 
           <div className="mb-6">
-            <label className="block text-gray-300 mb-2 text-sm font-medium">Address <span className="text-red-400">*</span></label>
+            <label className="block text-gray-700 mb-2 text-sm font-medium">Address <span className="text-red-500">*</span></label>
             <textarea
               value={formData.address}
               onChange={(e) => setFormData({...formData, address: e.target.value})}
-              className="w-full bg-gray-700 text-white px-4 py-3 rounded-xl outline-none border border-gray-600 focus:border-blue-500 resize-none"
+              className="w-full bg-gray-50 text-gray-800 px-4 py-3 rounded-xl outline-none border-2 border-gray-300 focus:border-blue-500 resize-none"
               rows="2"
               placeholder="Enter your full address"
               required
@@ -275,16 +275,16 @@ const KYC = () => {
           </div>
 
           {/* Document Info */}
-          <h3 className="text-white font-bold text-lg mb-4 flex items-center gap-2">
-            <FaIdCard className="text-green-400" /> Document Details
+          <h3 className="text-gray-800 font-bold text-lg mb-4 flex items-center gap-2">
+            <FaIdCard className="text-green-500" /> Document Details
           </h3>
 
           <div className="mb-4">
-            <label className="block text-gray-300 mb-2 text-sm font-medium">Document Type <span className="text-red-400">*</span></label>
+            <label className="block text-gray-700 mb-2 text-sm font-medium">Document Type <span className="text-red-500">*</span></label>
             <select
               value={formData.documentType}
               onChange={(e) => setFormData({...formData, documentType: e.target.value})}
-              className="w-full bg-gray-700 text-white px-4 py-3 rounded-xl outline-none border border-gray-600 focus:border-blue-500"
+              className="w-full bg-gray-50 text-gray-800 px-4 py-3 rounded-xl outline-none border-2 border-gray-300 focus:border-blue-500"
             >
               <option value="aadhaar">Aadhaar Card</option>
               <option value="pan">PAN Card</option>
@@ -294,20 +294,20 @@ const KYC = () => {
           </div>
 
           <div className="mb-6">
-            <label className="block text-gray-300 mb-2 text-sm font-medium">Document Number <span className="text-red-400">*</span></label>
+            <label className="block text-gray-700 mb-2 text-sm font-medium">Document Number <span className="text-red-500">*</span></label>
             <input
               type="text"
               value={formData.documentNumber}
               onChange={(e) => setFormData({...formData, documentNumber: e.target.value.toUpperCase()})}
-              className="w-full bg-gray-700 text-white px-4 py-3 rounded-xl outline-none border border-gray-600 focus:border-blue-500"
+              className="w-full bg-gray-50 text-gray-800 px-4 py-3 rounded-xl outline-none border-2 border-gray-300 focus:border-blue-500"
               placeholder="Enter document number"
               required
             />
           </div>
 
           {/* Document Upload */}
-          <h3 className="text-white font-bold text-lg mb-4 flex items-center gap-2">
-            <FaCamera className="text-purple-400" /> Upload Documents
+          <h3 className="text-gray-800 font-bold text-lg mb-4 flex items-center gap-2">
+            <FaCamera className="text-purple-500" /> Upload Documents
           </h3>
 
           <FileUploadBox
@@ -333,14 +333,14 @@ const KYC = () => {
             inputRef={selfieRef}
           />
 
-          <p className="text-gray-400 text-xs mb-6">
+          <p className="text-gray-600 text-xs mb-6">
             * Hold your document next to your face for the selfie. Make sure both your face and document are clearly visible.
           </p>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-4 rounded-xl disabled:opacity-50 flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform"
+            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-4 rounded-xl disabled:opacity-50 flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform shadow-lg"
           >
             {loading ? (
               <>
@@ -356,8 +356,8 @@ const KYC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4 pb-24">
-      <h1 className="text-2xl font-bold text-white mb-6">KYC Verification</h1>
+    <div className="min-h-screen bg-[#e8f5d0] p-4 pb-24">
+      <h1 className="text-2xl font-bold text-gray-800 mb-6">KYC Verification</h1>
       {renderForm()}
     </div>
   );

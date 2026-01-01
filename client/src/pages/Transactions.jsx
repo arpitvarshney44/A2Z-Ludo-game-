@@ -32,8 +32,8 @@ const Transactions = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black p-4 pb-24">
-      <h1 className="text-3xl font-bold text-white mb-6">Transactions</h1>
+    <div className="min-h-screen bg-[#e8f5d0] p-4 pb-24">
+      <h1 className="text-3xl font-bold text-gray-800 mb-6">Transactions</h1>
 
       {loading ? (
         <div className="text-center text-gray-400 py-10">Loading...</div>

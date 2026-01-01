@@ -1,13 +1,19 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaBars, FaWallet, FaGift, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { FaBars, FaWallet, FaGift, FaChevronRight, FaUser, FaGamepad, FaHistory, FaHeadset, FaFileAlt, FaArrowLeft, FaLanguage } from 'react-icons/fa';
 import useAuthStore from '../store/authStore';
 
 const Header = () => {
   const { user } = useAuthStore();
+  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [policyOpen, setPolicyOpen] = useState(false);
+
+  const handleMenuItemClick = (path) => {
+    setMenuOpen(false);
+    navigate(path);
+  };
 
   return (
     <>
@@ -52,7 +58,7 @@ const Header = () => {
         </div>
       </header>
 
-      {/* Side Menu - Rendered outside header */}
+      {/* Side Menu */}
       <AnimatePresence>
         {menuOpen && (
           <>
@@ -69,145 +75,171 @@ const Header = () => {
               animate={{ x: 0 }}
               exit={{ x: -300 }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed left-0 top-0 bottom-0 w-64 sm:w-72 bg-gradient-to-b from-gray-900 via-gray-800 to-black z-[110] shadow-2xl border-r-2 border-purple-500"
+              className="fixed left-0 top-0 bottom-0 w-80 bg-[#e8f5d0] z-[110] shadow-2xl"
               style={{ maxWidth: '85vw' }}
             >
-              <div className="p-6 h-full overflow-y-auto">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-white font-bold text-xl">Menu</h2>
-                  <button 
-                    onClick={() => setMenuOpen(false)}
-                    className="text-white text-2xl hover:scale-110 transition-transform bg-red-500 w-8 h-8 rounded-full flex items-center justify-center"
-                  >
-                    ✕
-                  </button>
+              {/* Header */}
+              <div className="bg-gradient-to-r from-gray-800 to-gray-900 p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain" />
+                  <h2 className="text-white font-black text-xl">A2Z Ludo</h2>
                 </div>
+                <button 
+                  onClick={() => setMenuOpen(false)}
+                  className="text-black bg-yellow-400 w-10 h-10 rounded-lg flex items-center justify-center hover:scale-110 transition-transform font-bold text-xl"
+                >
+                  ✕
+                </button>
+              </div>
 
-                <div className="flex items-center gap-3 mb-6 bg-gradient-to-r from-purple-600 to-pink-600 p-4 rounded-2xl shadow-xl">
-                  <img 
-                    src={user?.avatar || 'https://via.placeholder.com/50'} 
-                    alt="Avatar" 
-                    className="w-14 h-14 rounded-full border-2 border-white flex-shrink-0"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white font-bold text-base truncate">
-                      {user?.username || user?.phoneNumber}
-                    </p>
-                    <p className="text-white/80 text-sm truncate">ID: {user?.referralCode}</p>
+              {/* Menu Items */}
+              <div className="p-4 space-y-2 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 80px)' }}>
+                {/* My Profile */}
+                <button
+                  onClick={() => handleMenuItemClick('/profile')}
+                  className="w-full bg-blue-100 hover:bg-blue-200 rounded-2xl p-4 flex items-center justify-between transition-all shadow-sm"
+                >
+                  <div className="flex items-center gap-3">
+                    <FaUser className="text-blue-600 text-2xl" />
+                    <span className="text-gray-800 font-bold text-lg">My Profile</span>
                   </div>
-                </div>
+                  <FaChevronRight className="text-gray-600" />
+                </button>
 
-                <nav className="space-y-2">
-                  <Link 
-                    to="/profile" 
-                    onClick={() => setMenuOpen(false)}
-                    className="block px-4 py-3 text-white hover:bg-gradient-to-r hover:from-yellow-400 hover:to-orange-500 rounded-xl font-semibold transition-all"
-                  >
-                    👤 My Profile
-                  </Link>
-                  <Link 
-                    to="/game-lobby" 
-                    onClick={() => setMenuOpen(false)}
-                    className="block px-4 py-3 text-white hover:bg-gradient-to-r hover:from-yellow-400 hover:to-orange-500 rounded-xl font-semibold transition-all"
-                  >
-                    🎮 Play
-                  </Link>
-                  <Link 
-                    to="/wallet" 
-                    onClick={() => setMenuOpen(false)}
-                    className="block px-4 py-3 text-white hover:bg-gradient-to-r hover:from-yellow-400 hover:to-orange-500 rounded-xl font-semibold transition-all"
-                  >
-                    💳 My Wallet
-                  </Link>
-                  <Link 
-                    to="/refer" 
-                    onClick={() => setMenuOpen(false)}
-                    className="block px-4 py-3 text-white hover:bg-gradient-to-r hover:from-yellow-400 hover:to-orange-500 rounded-xl font-semibold transition-all"
-                  >
-                    👥 Refer and Earn
-                  </Link>
-                  <Link 
-                    to="/transactions" 
-                    onClick={() => setMenuOpen(false)}
-                    className="block px-4 py-3 text-white hover:bg-gradient-to-r hover:from-yellow-400 hover:to-orange-500 rounded-xl font-semibold transition-all"
-                  >
-                    🕐 History
-                  </Link>
-                  <Link 
-                    to="/support" 
-                    onClick={() => setMenuOpen(false)}
-                    className="block px-4 py-3 text-white hover:bg-gradient-to-r hover:from-yellow-400 hover:to-orange-500 rounded-xl font-semibold transition-all"
-                  >
-                    💬 Support
-                  </Link>
-                  
-                  {/* All Policy Dropdown */}
-                  <div>
-                    <button
-                      onClick={() => setPolicyOpen(!policyOpen)}
-                      className="w-full flex items-center justify-between px-4 py-3 text-white hover:bg-gradient-to-r hover:from-yellow-400 hover:to-orange-500 rounded-xl font-semibold transition-all"
+                {/* Play */}
+                <button
+                  onClick={() => handleMenuItemClick('/game-lobby')}
+                  className="w-full bg-blue-100 hover:bg-blue-200 rounded-2xl p-4 flex items-center justify-between transition-all shadow-sm"
+                >
+                  <div className="flex items-center gap-3">
+                    <FaGamepad className="text-blue-600 text-2xl" />
+                    <span className="text-gray-800 font-bold text-lg">Play</span>
+                  </div>
+                  <FaChevronRight className="text-gray-600" />
+                </button>
+
+                {/* My Wallet */}
+                <button
+                  onClick={() => handleMenuItemClick('/wallet')}
+                  className="w-full bg-blue-100 hover:bg-blue-200 rounded-2xl p-4 flex items-center justify-between transition-all shadow-sm"
+                >
+                  <div className="flex items-center gap-3">
+                    <FaWallet className="text-blue-600 text-2xl" />
+                    <span className="text-gray-800 font-bold text-lg">My Wallet</span>
+                  </div>
+                  <FaChevronRight className="text-gray-600" />
+                </button>
+
+                {/* Refer and Earn */}
+                <button
+                  onClick={() => handleMenuItemClick('/refer')}
+                  className="w-full bg-blue-100 hover:bg-blue-200 rounded-2xl p-4 flex items-center justify-between transition-all shadow-sm"
+                >
+                  <div className="flex items-center gap-3">
+                    <FaGift className="text-blue-600 text-2xl" />
+                    <span className="text-gray-800 font-bold text-lg">Refer and Earn</span>
+                  </div>
+                  <FaChevronRight className="text-gray-600" />
+                </button>
+
+                {/* History */}
+                <button
+                  onClick={() => handleMenuItemClick('/transactions')}
+                  className="w-full bg-blue-100 hover:bg-blue-200 rounded-2xl p-4 flex items-center justify-between transition-all shadow-sm"
+                >
+                  <div className="flex items-center gap-3">
+                    <FaHistory className="text-blue-600 text-2xl" />
+                    <span className="text-gray-800 font-bold text-lg">History</span>
+                  </div>
+                  <FaChevronRight className="text-gray-600" />
+                </button>
+
+                {/* Support */}
+                <button
+                  onClick={() => handleMenuItemClick('/support')}
+                  className="w-full bg-blue-100 hover:bg-blue-200 rounded-2xl p-4 flex items-center justify-between transition-all shadow-sm"
+                >
+                  <div className="flex items-center gap-3">
+                    <FaHeadset className="text-blue-600 text-2xl" />
+                    <span className="text-gray-800 font-bold text-lg">Support</span>
+                  </div>
+                  <FaChevronRight className="text-gray-600" />
+                </button>
+
+                
+
+                {/* All Policy */}
+                <button
+                  onClick={() => setPolicyOpen(!policyOpen)}
+                  className="w-full bg-blue-100 hover:bg-blue-200 rounded-2xl p-4 flex items-center justify-between transition-all shadow-sm"
+                >
+                  <div className="flex items-center gap-3">
+                    <FaFileAlt className="text-blue-600 text-2xl" />
+                    <span className="text-gray-800 font-bold text-lg">All Policy</span>
+                  </div>
+                  <FaChevronRight className="text-gray-600" />
+                </button>
+
+                {/* Policy Submenu */}
+                <AnimatePresence>
+                  {policyOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden pl-4 space-y-2"
                     >
-                      <span>📋 All Policy</span>
-                      {policyOpen ? <FaChevronUp /> : <FaChevronDown />}
-                    </button>
-                    
-                    <AnimatePresence>
-                      {policyOpen && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          className="overflow-hidden"
-                        >
-                          <div className="pl-4 space-y-1 mt-1">
-                            <Link 
-                              to="/privacy-policy" 
-                              onClick={() => setMenuOpen(false)}
-                              className="block px-4 py-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg text-sm transition-all"
-                            >
-                              • Privacy Policy
-                            </Link>
-                            <Link 
-                              to="/terms-conditions" 
-                              onClick={() => setMenuOpen(false)}
-                              className="block px-4 py-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg text-sm transition-all"
-                            >
-                              • Terms & Condition
-                            </Link>
-                            <Link 
-                              to="/tds-policy" 
-                              onClick={() => setMenuOpen(false)}
-                              className="block px-4 py-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg text-sm transition-all"
-                            >
-                              • TDS Policy
-                            </Link>
-                            <Link 
-                              to="/responsible-gaming" 
-                              onClick={() => setMenuOpen(false)}
-                              className="block px-4 py-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg text-sm transition-all"
-                            >
-                              • Responsible Gaming
-                            </Link>
-                            <Link 
-                              to="/about" 
-                              onClick={() => setMenuOpen(false)}
-                              className="block px-4 py-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg text-sm transition-all"
-                            >
-                              • About
-                            </Link>
-                            <Link 
-                              to="/contact" 
-                              onClick={() => setMenuOpen(false)}
-                              className="block px-4 py-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg text-sm transition-all"
-                            >
-                              • Contact
-                            </Link>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                      <button
+                        onClick={() => handleMenuItemClick('/privacy-policy')}
+                        className="w-full bg-white hover:bg-gray-100 rounded-xl p-3 text-left text-gray-700 font-semibold transition-all"
+                      >
+                        • Privacy Policy
+                      </button>
+                      <button
+                        onClick={() => handleMenuItemClick('/terms-conditions')}
+                        className="w-full bg-white hover:bg-gray-100 rounded-xl p-3 text-left text-gray-700 font-semibold transition-all"
+                      >
+                        • Terms & Conditions
+                      </button>
+                      <button
+                        onClick={() => handleMenuItemClick('/tds-policy')}
+                        className="w-full bg-white hover:bg-gray-100 rounded-xl p-3 text-left text-gray-700 font-semibold transition-all"
+                      >
+                        • TDS Policy
+                      </button>
+                      <button
+                        onClick={() => handleMenuItemClick('/responsible-gaming')}
+                        className="w-full bg-white hover:bg-gray-100 rounded-xl p-3 text-left text-gray-700 font-semibold transition-all"
+                      >
+                        • Responsible Gaming
+                      </button>
+                      <button
+                        onClick={() => handleMenuItemClick('/about')}
+                        className="w-full bg-white hover:bg-gray-100 rounded-xl p-3 text-left text-gray-700 font-semibold transition-all"
+                      >
+                        • About
+                      </button>
+                      <button
+                        onClick={() => handleMenuItemClick('/contact')}
+                        className="w-full bg-white hover:bg-gray-100 rounded-xl p-3 text-left text-gray-700 font-semibold transition-all"
+                      >
+                        • Contact
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Back */}
+                <button
+                  onClick={() => setMenuOpen(false)}
+                  className="w-full bg-blue-100 hover:bg-blue-200 rounded-2xl p-4 flex items-center justify-between transition-all shadow-sm"
+                >
+                  <div className="flex items-center gap-3">
+                    <FaArrowLeft className="text-blue-600 text-2xl" />
+                    <span className="text-gray-800 font-bold text-lg">Back</span>
                   </div>
-                </nav>
+                  <FaChevronRight className="text-gray-600" />
+                </button>
               </div>
             </motion.div>
           </>

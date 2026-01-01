@@ -65,7 +65,7 @@ const PaymentHistory = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4 pb-24">
+    <div className="min-h-screen bg-[#e8f5d0] p-4 pb-24">
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center gap-3 mb-6">
           <span className="text-4xl">📜</span>

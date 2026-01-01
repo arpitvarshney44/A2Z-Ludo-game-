@@ -1,21 +1,21 @@
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FaEdit, FaSignOutAlt, FaCheckCircle, FaClock, FaCamera, FaTimes, FaSpinner } from 'react-icons/fa';
+import { motion } from 'framer-motion';
+import { FaEdit, FaSignOutAlt, FaPhone, FaEnvelope, FaCheckCircle, FaSave, FaTimes } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import useAuthStore from '../store/authStore';
 import { useNavigate } from 'react-router-dom';
-import { useState, useRef } from 'react';
-import { userAPI, authAPI } from '../services/api';
+import { useState } from 'react';
+import axios from 'axios';
 
 const Profile = () => {
   const { user, logout, updateUser } = useAuthStore();
   const navigate = useNavigate();
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editUsername, setEditUsername] = useState(user?.username || '');
-  const [editEmail, setEditEmail] = useState(user?.email || '');
+  const [referCode, setReferCode] = useState('');
+  const [isEditingUsername, setIsEditingUsername] = useState(false);
+  const [isEditingEmail, setIsEditingEmail] = useState(false);
+  const [editedUsername, setEditedUsername] = useState(user?.username || '');
+  const [editedEmail, setEditedEmail] = useState(user?.email || '');
   const [loading, setLoading] = useState(false);
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const fileInputRef = useRef(null);
 
   const handleLogout = () => {
     logout();
@@ -23,262 +23,238 @@ const Profile = () => {
     navigate('/login');
   };
 
-  const handleAvatarClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleAvatarChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file');
+  const handleSubmitReferCode = () => {
+    if (!referCode.trim()) {
+      toast.error('Please enter a refer code');
       return;
     }
-
-    // Validate file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error('Image size should be less than 10MB');
-      return;
-    }
-
-    setUploadingAvatar(true);
-    try {
-      // Compress image before upload
-      const compressedFile = await compressImage(file);
-      
-      const formData = new FormData();
-      formData.append('avatar', compressedFile);
-
-      const response = await userAPI.uploadAvatar(formData);
-      
-      // Update user in store
-      updateUser({ ...user, avatar: response.data.avatar });
-      toast.success('Profile picture updated!');
-    } catch (error) {
-      console.error('Avatar upload error:', error);
-      toast.error(error.response?.data?.message || 'Failed to upload image');
-    } finally {
-      setUploadingAvatar(false);
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }
+    // Handle refer code submission
+    toast.success('Refer code submitted!');
+    setReferCode('');
   };
 
-  // Compress image before upload
-  const compressImage = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = (event) => {
-        const img = new Image();
-        img.src = event.target.result;
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          let width = img.width;
-          let height = img.height;
-          
-          // Max dimensions
-          const MAX_WIDTH = 1200;
-          const MAX_HEIGHT = 1200;
-          
-          if (width > height) {
-            if (width > MAX_WIDTH) {
-              height *= MAX_WIDTH / width;
-              width = MAX_WIDTH;
-            }
-          } else {
-            if (height > MAX_HEIGHT) {
-              width *= MAX_HEIGHT / height;
-              height = MAX_HEIGHT;
-            }
-          }
-          
-          canvas.width = width;
-          canvas.height = height;
-          
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-          
-          canvas.toBlob(
-            (blob) => {
-              if (blob) {
-                const compressedFile = new File([blob], file.name, {
-                  type: 'image/jpeg',
-                  lastModified: Date.now(),
-                });
-                resolve(compressedFile);
-              } else {
-                reject(new Error('Canvas to Blob conversion failed'));
-              }
-            },
-            'image/jpeg',
-            0.85 // Quality 85%
-          );
-        };
-        img.onerror = () => reject(new Error('Image load failed'));
-      };
-      reader.onerror = () => reject(new Error('File read failed'));
-    });
-  };
-
-  const handleUpdateProfile = async (e) => {
-    e.preventDefault();
-    
-    if (!editUsername.trim()) {
+  const handleUpdateUsername = async () => {
+    if (!editedUsername.trim()) {
       toast.error('Username cannot be empty');
       return;
     }
 
-    if (editEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editEmail)) {
-      toast.error('Please enter a valid email');
+    if (editedUsername === user?.username) {
+      setIsEditingUsername(false);
       return;
     }
 
     setLoading(true);
     try {
-      await userAPI.updateProfile({ 
-        username: editUsername.trim(), 
-        email: editEmail.trim() 
-      });
+      const authStorage = localStorage.getItem('auth-storage');
+      const token = authStorage ? JSON.parse(authStorage).state.token : null;
       
-      const response = await authAPI.getMe();
-      updateUser(response.data.user);
-      
-      toast.success('Profile updated successfully!');
-      setShowEditModal(false);
+      const response = await axios.put(
+        '/user/profile',
+        { username: editedUsername },
+        {
+          baseURL: import.meta.env.VITE_API_URL,
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      updateUser({ username: editedUsername });
+      toast.success('Username updated successfully!');
+      setIsEditingUsername(false);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to update profile');
+      toast.error(error.response?.data?.message || 'Failed to update username');
+      setEditedUsername(user?.username || '');
     } finally {
       setLoading(false);
     }
   };
 
-  const getKYCStatusBadge = () => {
-    if (user?.isKYCVerified) {
-      return (
-        <div className="flex items-center gap-2 bg-green-500/20 px-4 py-2 rounded-xl border border-green-500">
-          <FaCheckCircle className="text-green-400" />
-          <span className="text-green-400 font-bold">Verified</span>
-        </div>
+  const handleUpdateEmail = async () => {
+    if (!editedEmail.trim()) {
+      toast.error('Email cannot be empty');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(editedEmail)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
+    if (editedEmail === user?.email) {
+      setIsEditingEmail(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const authStorage = localStorage.getItem('auth-storage');
+      const token = authStorage ? JSON.parse(authStorage).state.token : null;
+      
+      const response = await axios.put(
+        '/user/profile',
+        { email: editedEmail },
+        {
+          baseURL: import.meta.env.VITE_API_URL,
+          headers: { Authorization: `Bearer ${token}` }
+        }
       );
-    } else if (user?.kycStatus === 'pending') {
-      return (
-        <div className="flex items-center gap-2 bg-yellow-500/20 px-4 py-2 rounded-xl border border-yellow-500">
-          <FaClock className="text-yellow-400" />
-          <span className="text-yellow-400 font-bold">Pending</span>
-        </div>
-      );
-    } else {
-      return (
-        <div className="flex items-center gap-2 bg-red-500/20 px-4 py-2 rounded-xl border border-red-500">
-          <span className="text-red-400 font-bold">Not Verified</span>
-        </div>
-      );
+
+      updateUser({ email: editedEmail });
+      toast.success('Email updated successfully!');
+      setIsEditingEmail(false);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update email');
+      setEditedEmail(user?.email || '');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4 pb-24">
-      {/* Hidden file input */}
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={handleAvatarChange}
-        accept="image/*"
-        className="hidden"
-      />
-
+    <div className="min-h-screen bg-[#e8f5d0] p-4 pb-24">
       {/* Profile Header */}
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="relative bg-gradient-to-br from-purple-600 via-pink-600 to-red-600 rounded-[2rem] p-6 mb-6 overflow-hidden shadow-2xl"
+        className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-3xl p-6 mb-6 text-center shadow-lg"
       >
-        <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full filter blur-3xl opacity-20" />
-        <div className="absolute bottom-0 left-0 w-40 h-40 bg-yellow-400 rounded-full filter blur-3xl opacity-20" />
+        <div className="relative inline-block mb-3">
+          <img
+            src={user?.avatar || 'https://via.placeholder.com/100'}
+            alt="Avatar"
+            className="w-24 h-24 rounded-full border-4 border-white shadow-xl object-cover mx-auto"
+          />
+        </div>
         
-        <div className="relative">
-          <div className="flex flex-col items-center mb-4">
-            <div className="relative mb-4">
-              <img
-                src={user?.avatar || 'https://via.placeholder.com/120'}
-                alt="Avatar"
-                className="w-28 h-28 rounded-full border-4 border-white shadow-xl object-cover"
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <span className="text-red-500 text-2xl">💎</span>
+          {isEditingUsername ? (
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={editedUsername}
+                onChange={(e) => setEditedUsername(e.target.value)}
+                className="bg-white/20 border-2 border-white/40 rounded-lg px-3 py-1 text-white text-xl font-bold outline-none focus:border-blue-400"
+                autoFocus
               />
-              <button 
-                onClick={handleAvatarClick}
-                disabled={uploadingAvatar}
-                className="absolute bottom-0 right-0 w-10 h-10 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform border-2 border-white disabled:opacity-70"
+              <button
+                onClick={handleUpdateUsername}
+                disabled={loading}
+                className="text-green-400 text-xl hover:scale-110 transition-all"
               >
-                {uploadingAvatar ? (
-                  <FaSpinner className="text-white animate-spin" />
-                ) : (
-                  <FaCamera className="text-white" />
-                )}
+                <FaSave />
               </button>
-            </div>
-            
-            <h2 className="text-3xl font-black text-white mb-2 text-center">
-              {user?.username || 'User'}
-            </h2>
-            <p className="text-white/90 text-lg mb-1">{user?.phoneNumber}</p>
-            {user?.email && (
-              <p className="text-white/80 text-sm mb-3">{user?.email}</p>
-            )}
-            
-            <button
-              onClick={() => {
-                setEditUsername(user?.username || '');
-                setEditEmail(user?.email || '');
-                setShowEditModal(true);
-              }}
-              className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-xl text-white font-semibold hover:bg-white/30 transition-all flex items-center gap-2 mx-auto"
-            >
-              <FaEdit />
-              Edit Profile
-            </button>
-          </div>
-
-          <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex-1 min-w-0 mr-3">
-                <p className="text-white/80 text-sm mb-1">Referral Code</p>
-                <p className="text-white font-black text-2xl truncate">{user?.referralCode}</p>
-              </div>
-              <button 
+              <button
                 onClick={() => {
-                  navigator.clipboard.writeText(user?.referralCode || '');
-                  toast.success('Referral code copied!');
+                  setIsEditingUsername(false);
+                  setEditedUsername(user?.username || '');
                 }}
-                className="bg-white text-purple-600 px-5 py-3 rounded-xl font-bold hover:scale-105 transition-transform shadow-lg whitespace-nowrap"
+                className="text-red-400 text-xl hover:scale-110 transition-all"
               >
-                Copy
+                <FaTimes />
               </button>
             </div>
-          </div>
+          ) : (
+            <>
+              <h2 className="text-2xl font-black text-white">
+                {user?.username || 'User'}
+              </h2>
+              <button
+                onClick={() => setIsEditingUsername(true)}
+                className="text-blue-400 text-xl hover:scale-110 transition-all"
+              >
+                <FaEdit />
+              </button>
+            </>
+          )}
         </div>
       </motion.div>
+
+      {/* Complete Profile Section */}
+      <div className="mb-6">
+        <h3 className="text-gray-800 font-bold text-xl mb-4">Complete Profile</h3>
+        
+        {/* Mobile Number */}
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="bg-white rounded-2xl p-4 mb-3 shadow-lg flex items-center gap-4"
+        >
+          <div className="w-14 h-14 bg-black rounded-2xl flex items-center justify-center flex-shrink-0">
+            <FaPhone className="text-blue-400 text-2xl" />
+          </div>
+          <div className="flex-1">
+            <p className="text-gray-600 text-sm font-semibold">Mobile Number</p>
+            <p className="text-gray-800 font-bold text-lg">{user?.phoneNumber}</p>
+          </div>
+        </motion.div>
+
+        {/* Email Address */}
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.15 }}
+          className="bg-white rounded-2xl p-4 mb-3 shadow-lg flex items-center gap-4"
+        >
+          <div className="w-14 h-14 bg-blue-500 rounded-2xl flex items-center justify-center flex-shrink-0">
+            <FaEnvelope className="text-white text-2xl" />
+          </div>
+          <div className="flex-1">
+            <p className="text-gray-600 text-sm font-semibold">Email Address</p>
+            {isEditingEmail ? (
+              <input
+                type="email"
+                value={editedEmail}
+                onChange={(e) => setEditedEmail(e.target.value)}
+                className="bg-gray-100 border-2 border-blue-300 rounded-lg px-3 py-1 text-gray-800 font-bold text-lg outline-none focus:border-blue-500 w-full"
+                autoFocus
+              />
+            ) : (
+              <p className="text-gray-800 font-bold text-lg">{user?.email || 'Not set'}</p>
+            )}
+          </div>
+          {isEditingEmail ? (
+            <div className="flex gap-2">
+              <button
+                onClick={handleUpdateEmail}
+                disabled={loading}
+                className="text-green-500 text-2xl hover:scale-110 transition-all"
+              >
+                <FaSave />
+              </button>
+              <button
+                onClick={() => {
+                  setIsEditingEmail(false);
+                  setEditedEmail(user?.email || '');
+                }}
+                className="text-red-500 text-2xl hover:scale-110 transition-all"
+              >
+                <FaTimes />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setIsEditingEmail(true)}
+              className="text-purple-500 text-2xl hover:scale-110 transition-all"
+            >
+              <FaEdit />
+            </button>
+          )}
+        </motion.div>
+      </div>
 
       {/* KYC Verification */}
       <Link to="/kyc">
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.1 }}
-          className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-5 mb-4 flex items-center justify-between shadow-xl border-2 border-blue-400 hover:scale-105 transition-transform"
+          transition={{ delay: 0.2 }}
+          className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-3xl p-6 mb-6 text-center shadow-lg hover:scale-105 transition-transform"
         >
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-3xl">🆔</span>
-              <h3 className="text-white font-black text-xl">KYC VERIFICATION</h3>
-            </div>
-            {getKYCStatusBadge()}
-          </div>
-          <span className="text-white text-3xl">→</span>
+          <div className="text-5xl mb-3">🆔</div>
+          <h3 className="text-white font-black text-2xl">KYC VERIFICATION</h3>
         </motion.div>
       </Link>
 
@@ -286,178 +262,100 @@ const Profile = () => {
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2 }}
-        className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-5 mb-4 border-2 border-gray-700 shadow-xl"
+        transition={{ delay: 0.25 }}
+        className="mb-6"
       >
-        <h3 className="text-white font-bold text-lg mb-3 flex items-center gap-2">
-          <span className="text-2xl">🎁</span>
-          Use Refer Code
-        </h3>
+        <h3 className="text-gray-800 font-bold text-xl mb-4">Use Refer Code</h3>
         <div className="flex gap-2">
           <input
             type="text"
-            placeholder="Enter refer Code"
-            className="flex-1 bg-gray-700 text-white px-4 py-3 rounded-xl outline-none border-2 border-gray-600 focus:border-yellow-400 transition-all text-base"
+            value={referCode}
+            onChange={(e) => setReferCode(e.target.value.toUpperCase())}
+            placeholder="Enter Refer Code"
+            className="flex-1 bg-white border-2 border-gray-300 rounded-2xl px-4 py-3 text-gray-800 font-semibold outline-none focus:border-blue-500 transition-all"
           />
-          <button className="bg-gradient-to-r from-green-500 to-green-600 text-white w-12 h-12 rounded-xl font-bold hover:scale-105 transition-transform shadow-lg flex items-center justify-center flex-shrink-0">
-            ✓
+          <button
+            onClick={handleSubmitReferCode}
+            className="bg-green-100 border-2 border-green-300 w-14 h-14 rounded-2xl flex items-center justify-center hover:scale-105 transition-all flex-shrink-0"
+          >
+            <FaCheckCircle className="text-green-600 text-2xl" />
           </button>
         </div>
       </motion.div>
 
-      {/* Stats Grid */}
-      <motion.div
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.3 }}
-        className="mb-4"
-      >
-        <h3 className="text-white font-black text-2xl mb-4 flex items-center gap-2">
-          <span className="text-3xl">📊</span>
-          Your Stats
-        </h3>
+      {/* Other Details */}
+      <div className="mb-6">
+        <h3 className="text-gray-800 font-bold text-xl mb-4">Other Details</h3>
         
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-5 text-center shadow-xl border-2 border-orange-400">
-            <div className="text-4xl mb-2">🎁</div>
-            <p className="text-white font-black text-3xl mb-1">₹{user?.referralEarnings || 0}</p>
-            <p className="text-white/90 text-sm font-semibold">Referral Earning</p>
-          </div>
+        <div className="grid grid-cols-2 gap-4">
+          {/* Referral Earning */}
+          <motion.div
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="bg-gradient-to-br from-orange-400 to-orange-500 rounded-3xl p-6 text-center shadow-lg"
+          >
+            <div className="w-12 h-12 bg-white/30 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <span className="text-2xl">🎁</span>
+            </div>
+            <h4 className="text-white font-bold text-lg mb-2">Referral Earning</h4>
+            <p className="text-white font-black text-3xl">{user?.referralEarnings || 0}</p>
+          </motion.div>
 
-          <div className="bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-2xl p-5 text-center shadow-xl border-2 border-cyan-400">
-            <div className="text-4xl mb-2">⚔️</div>
-            <p className="text-white font-black text-3xl mb-1">{user?.totalGamesPlayed || 0}</p>
-            <p className="text-white/90 text-sm font-semibold">Games Played</p>
-          </div>
+          {/* Battle Played */}
+          <motion.div
+            initial={{ x: 20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="bg-gradient-to-br from-cyan-400 to-green-400 rounded-3xl p-6 text-center shadow-lg"
+          >
+            <div className="w-12 h-12 bg-white/30 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <span className="text-2xl">⚔️</span>
+            </div>
+            <h4 className="text-white font-bold text-lg mb-2">Battle Played</h4>
+            <p className="text-white font-black text-3xl">{user?.totalGamesPlayed || 0}</p>
+          </motion.div>
 
-          <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-5 text-center shadow-xl border-2 border-purple-400">
-            <div className="text-4xl mb-2">🪙</div>
-            <p className="text-white font-black text-3xl mb-1">₹{user?.totalCoinsWon || 0}</p>
-            <p className="text-white/90 text-sm font-semibold">Coins Won</p>
-          </div>
+          {/* Coin Won */}
+          <motion.div
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.35 }}
+            className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-3xl p-6 text-center shadow-lg"
+          >
+            <div className="w-12 h-12 bg-white/30 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <span className="text-2xl">🪙</span>
+            </div>
+            <h4 className="text-white font-bold text-lg mb-2">Coin Won</h4>
+            <p className="text-white font-black text-3xl">{user?.totalCoinsWon || 0}</p>
+          </motion.div>
 
-          <div className="bg-gradient-to-br from-pink-500 to-pink-600 rounded-2xl p-5 text-center shadow-xl border-2 border-pink-400">
-            <div className="text-4xl mb-2">💰</div>
-            <p className="text-white font-black text-3xl mb-1">₹{user?.totalWithdrawal || 0}</p>
-            <p className="text-white/90 text-sm font-semibold">Total Withdrawal</p>
-          </div>
+          {/* Total Withdrawal */}
+          <motion.div
+            initial={{ x: 20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.35 }}
+            className="bg-gradient-to-br from-purple-400 to-pink-500 rounded-3xl p-6 text-center shadow-lg"
+          >
+            <div className="w-12 h-12 bg-white/30 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <span className="text-2xl">💰</span>
+            </div>
+            <h4 className="text-white font-bold text-lg mb-2">Total Withdrawal</h4>
+            <p className="text-white font-black text-3xl">{user?.totalWithdrawal || 0}</p>
+          </motion.div>
         </div>
-      </motion.div>
-
-      {/* Win Rate */}
-      <motion.div
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.4 }}
-        className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl p-5 mb-4 shadow-xl border-2 border-green-400"
-      >
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-white/90 text-sm mb-1">Win Rate</p>
-            <p className="text-white font-black text-4xl">
-              {user?.totalGamesPlayed > 0 
-                ? ((user?.totalGamesWon / user?.totalGamesPlayed) * 100).toFixed(1)
-                : 0}%
-            </p>
-          </div>
-          <div className="text-6xl">🏆</div>
-        </div>
-        <div className="mt-3 flex gap-4 text-white/90 text-sm">
-          <span>✅ Won: {user?.totalGamesWon || 0}</span>
-          <span>❌ Lost: {user?.totalGamesLost || 0}</span>
-        </div>
-      </motion.div>
+      </div>
 
       {/* Logout Button */}
       <motion.button
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.5 }}
+        transition={{ delay: 0.4 }}
         onClick={handleLogout}
-        className="w-full bg-gradient-to-r from-red-600 to-red-700 text-white font-black text-lg py-5 rounded-2xl flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-xl border-2 border-red-500"
+        className="w-full bg-black text-white font-bold text-xl py-4 rounded-2xl flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-lg"
       >
-        <FaSignOutAlt className="text-2xl" />
         Log Out
       </motion.button>
-
-      {/* Edit Profile Modal */}
-      <AnimatePresence>
-        {showEditModal && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/80 z-[100] backdrop-blur-sm"
-              onClick={() => setShowEditModal(false)}
-            />
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="fixed inset-0 z-[110] flex items-center justify-center p-4"
-            >
-              <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-3xl p-6 w-full max-w-md border-2 border-purple-500 shadow-2xl">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-2xl font-black text-white">Edit Profile</h3>
-                  <button
-                    onClick={() => setShowEditModal(false)}
-                    className="text-white text-2xl hover:scale-110 transition-transform bg-red-500 w-8 h-8 rounded-full flex items-center justify-center"
-                  >
-                    <FaTimes />
-                  </button>
-                </div>
-
-                <form onSubmit={handleUpdateProfile}>
-                  <div className="mb-4">
-                    <label className="block text-gray-300 mb-2 font-medium text-sm">
-                      Username
-                    </label>
-                    <input
-                      type="text"
-                      value={editUsername}
-                      onChange={(e) => setEditUsername(e.target.value)}
-                      placeholder="Enter username"
-                      className="w-full bg-gray-700 text-white px-4 py-3 rounded-xl outline-none border-2 border-gray-600 focus:border-purple-500 transition-all"
-                      required
-                    />
-                  </div>
-
-                  <div className="mb-6">
-                    <label className="block text-gray-300 mb-2 font-medium text-sm">
-                      Email (Optional)
-                    </label>
-                    <input
-                      type="email"
-                      value={editEmail}
-                      onChange={(e) => setEditEmail(e.target.value)}
-                      placeholder="your@email.com"
-                      className="w-full bg-gray-700 text-white px-4 py-3 rounded-xl outline-none border-2 border-gray-600 focus:border-purple-500 transition-all"
-                    />
-                  </div>
-
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setShowEditModal(false)}
-                      className="flex-1 bg-gray-700 text-white py-3 rounded-xl font-bold hover:bg-gray-600 transition-all"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl font-bold hover:scale-105 transition-all disabled:opacity-50"
-                    >
-                      {loading ? 'Saving...' : 'Save'}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

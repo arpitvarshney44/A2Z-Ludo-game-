@@ -2,7 +2,6 @@ import jwt from 'jsonwebtoken';
 import Admin from '../models/Admin.js';
 import User from '../models/User.js';
 import Transaction from '../models/Transaction.js';
-import Game from '../models/Game.js';
 import Support from '../models/Support.js';
 import AppSettings from '../models/AppSettings.js';
 import Policy from '../models/Policy.js';
@@ -67,10 +66,6 @@ export const getDashboardStats = async (req, res) => {
     const blockedUsers = await User.countDocuments({ isBlocked: true });
     const kycPending = await User.countDocuments({ 'kycDetails.status': 'pending' });
     
-    const totalGames = await Game.countDocuments();
-    const activeGames = await Game.countDocuments({ status: 'in_progress' });
-    const completedGames = await Game.countDocuments({ status: 'completed' });
-    
     const totalTransactions = await Transaction.countDocuments();
     const pendingWithdrawals = await Transaction.countDocuments({ type: 'withdrawal', status: 'pending' });
     
@@ -106,9 +101,9 @@ export const getDashboardStats = async (req, res) => {
           kycPending
         },
         games: {
-          total: totalGames,
-          active: activeGames,
-          completed: completedGames
+          total: 0,
+          active: 0,
+          completed: 0
         },
         transactions: {
           total: totalTransactions,
@@ -186,14 +181,10 @@ export const getUserById = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(10);
 
-    const games = await Game.find({ 'players.user': user._id })
-      .sort({ createdAt: -1 })
-      .limit(10);
-
     res.status(200).json({
       user,
       recentTransactions: transactions,
-      recentGames: games
+      recentGames: []
     });
   } catch (error) {
     console.error('Get User Error:', error);
@@ -362,27 +353,15 @@ export const getAllGames = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
-    const skip = (page - 1) * limit;
-    const status = req.query.status;
 
-    const query = status ? { status } : {};
-
-    const games = await Game.find(query)
-      .populate('players.user', 'username phoneNumber')
-      .populate('winner', 'username phoneNumber')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
-
-    const total = await Game.countDocuments(query);
-
+    // Return empty games list since game functionality is removed
     res.status(200).json({
-      games,
+      games: [],
       pagination: {
         page,
         limit,
-        total,
-        pages: Math.ceil(total / limit)
+        total: 0,
+        pages: 0
       }
     });
   } catch (error) {

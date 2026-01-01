@@ -120,7 +120,7 @@ const Withdrawal = () => {
 
   if (!paymentSettings) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-[#e8f5d0] flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-yellow-400 mx-auto mb-4"></div>
           <p className="text-gray-400">Loading payment details...</p>
@@ -130,7 +130,7 @@ const Withdrawal = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4 pb-24">
+    <div className="min-h-screen bg-[#e8f5d0] p-4 pb-24">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -142,7 +142,7 @@ const Withdrawal = () => {
           </div>
           <button
             onClick={() => navigate('/payment-history')}
-            className="bg-white/10 backdrop-blur-sm border border-white/20 text-white px-4 py-2 rounded-xl hover:bg-white/20 transition-all flex items-center gap-2"
+            className="bg-blue-500 backdrop-blur-sm border border-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-600 transition-all flex items-center gap-2 shadow-lg"
           >
             <FaHistory /> History
           </button>

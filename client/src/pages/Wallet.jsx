@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaPlus, FaArrowDown, FaHistory, FaSync } from 'react-icons/fa';
+import { FaHistory } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import { authAPI } from '../services/api';
 import useAuthStore from '../store/authStore';
@@ -9,7 +9,6 @@ import useAuthStore from '../store/authStore';
 const Wallet = () => {
   const { user, updateUser } = useAuthStore();
   const navigate = useNavigate();
-  const [refreshing, setRefreshing] = useState(false);
 
   // Fetch balance on mount
   useEffect(() => {
@@ -24,63 +23,47 @@ const Wallet = () => {
     fetchBalance();
   }, [updateUser]);
 
-  const refreshBalance = async () => {
-    setRefreshing(true);
-    try {
-      const response = await authAPI.getMe();
-      updateUser(response.data.user);
-      toast.success('Balance refreshed!');
-    } catch (error) {
-      console.error('Failed to refresh balance:', error);
-      toast.error('Failed to refresh balance');
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <span className="text-4xl">💰</span>
-          <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
-            My Wallet
-          </h1>
-        </div>
-        <button
-          onClick={refreshBalance}
-          disabled={refreshing}
-          className="bg-white/10 backdrop-blur-sm border border-white/20 text-white p-3 rounded-xl hover:bg-white/20 transition-all disabled:opacity-50"
-          title="Refresh Balance"
-        >
-          <FaSync className={`text-xl ${refreshing ? 'animate-spin' : ''}`} />
-        </button>
+    <div className="min-h-screen bg-[#e8f5d0] p-4 pb-24">
+      {/* Balance Header */}
+      <div className="mb-6">
+        <h1 className="text-3xl font-black text-gray-800">Balance</h1>
       </div>
 
       {/* Deposit Cash Card */}
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="bg-gradient-to-br from-cyan-500 via-blue-500 to-blue-600 rounded-[2rem] p-6 mb-4 border-4 border-cyan-300 shadow-2xl relative overflow-hidden"
+        className="bg-white rounded-3xl shadow-lg mb-4 overflow-hidden border-l-8 border-blue-400"
       >
-        <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full filter blur-3xl opacity-20" />
-        <div className="relative">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-20 h-20 bg-white/30 backdrop-blur-sm rounded-2xl flex items-center justify-center border-2 border-white/50">
-              <span className="text-4xl">💳</span>
-            </div>
-            <div className="flex-1">
-              <h2 className="text-white/90 font-bold text-lg mb-1">Deposit Cash</h2>
-              <p className="text-5xl font-black text-white">₹{user?.depositCash || 0}</p>
-            </div>
+        <div className="flex">
+          {/* Left side - Illustration */}
+          <div className="w-2/5 bg-gray-50 flex items-center justify-center p-6">
+            <img 
+              src="/deposit.png" 
+              alt="Deposit" 
+              className="w-full h-auto object-contain max-w-[150px]"
+            />
           </div>
-          <button
-            onClick={() => navigate('/deposit')}
-            className="w-full bg-white text-blue-600 font-black text-lg py-4 rounded-2xl flex items-center justify-center gap-2 hover:scale-105 transition-all shadow-xl"
-          >
-            <FaPlus className="text-xl" />
-            Add Cash
-          </button>
+
+          {/* Right side - Content */}
+          <div className="flex-1 p-6 flex flex-col justify-center">
+            <div className="bg-gradient-to-r from-yellow-300 to-yellow-400 rounded-2xl px-6 py-3 mb-4 inline-block">
+              <h2 className="text-xl font-black text-gray-800">Deposit Cash</h2>
+            </div>
+            
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-blue-500 text-2xl">₹</span>
+              <span className="text-4xl font-black text-green-500">{user?.depositCash || 0}</span>
+            </div>
+
+            <button
+              onClick={() => navigate('/deposit')}
+              className="bg-gradient-to-r from-green-500 to-green-600 text-white font-bold text-lg px-8 py-3 rounded-xl hover:scale-105 transition-all shadow-lg"
+            >
+              + Add Cash
+            </button>
+          </div>
         </div>
       </motion.div>
 
@@ -89,54 +72,44 @@ const Wallet = () => {
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.1 }}
-        className="bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500 rounded-[2rem] p-6 mb-4 border-4 border-yellow-300 shadow-2xl relative overflow-hidden"
+        className="bg-white rounded-3xl shadow-lg mb-4 overflow-hidden border-l-8 border-yellow-400"
       >
-        <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full filter blur-3xl opacity-20" />
-        <div className="relative">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-20 h-20 bg-white/30 backdrop-blur-sm rounded-2xl flex items-center justify-center border-2 border-white/50">
-              <span className="text-4xl">🏆</span>
-            </div>
-            <div className="flex-1">
-              <h2 className="text-white/90 font-bold text-lg mb-1">Winning Cash</h2>
-              <p className="text-5xl font-black text-white">₹{user?.winningCash?.toFixed(2) || '0.00'}</p>
-            </div>
+        <div className="flex">
+          {/* Left side - Illustration */}
+          <div className="w-2/5 bg-gray-50 flex items-center justify-center p-6">
+            <img 
+              src="/win-cash.png" 
+              alt="Winning" 
+              className="w-full h-auto object-contain max-w-[150px]"
+            />
           </div>
-          <button
-            onClick={() => navigate('/withdrawal')}
-            className="w-full bg-white text-orange-600 font-black text-lg py-4 rounded-2xl flex items-center justify-center gap-2 hover:scale-105 transition-all shadow-xl"
-          >
-            <FaArrowDown className="text-xl" />
-            Withdraw
-          </button>
+
+          {/* Right side - Content */}
+          <div className="flex-1 p-6 flex flex-col justify-center">
+            <div className="bg-gradient-to-r from-yellow-300 to-yellow-400 rounded-2xl px-6 py-3 mb-4 inline-block">
+              <h2 className="text-xl font-black text-gray-800">Winning Cash</h2>
+            </div>
+            
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-blue-500 text-2xl">₹</span>
+              <span className="text-4xl font-black text-red-500">{user?.winningCash?.toFixed(0) || 0}</span>
+            </div>
+
+            <button
+              onClick={() => navigate('/withdrawal')}
+              className="bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold text-lg px-8 py-3 rounded-xl hover:scale-105 transition-all shadow-lg flex items-center justify-center gap-2"
+            >
+              <span className="text-xl">💳</span>
+              Withdraw
+            </button>
+          </div>
         </div>
       </motion.div>
-
-      {/* Bonus Cash Card */}
-      {user?.bonusCash > 0 && (
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500 rounded-[2rem] p-6 mb-4 border-4 border-pink-300 shadow-2xl relative overflow-hidden"
-        >
-          <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full filter blur-3xl opacity-20" />
-          <div className="relative flex items-center gap-4">
-            <div className="w-20 h-20 bg-white/30 backdrop-blur-sm rounded-2xl flex items-center justify-center border-2 border-white/50">
-              <span className="text-4xl">🎁</span>
-            </div>
-            <div className="flex-1">
-              <h2 className="text-white/90 font-bold text-lg mb-1">Bonus Cash</h2>
-              <p className="text-5xl font-black text-white">₹{user?.bonusCash || 0}</p>
-            </div>
-          </div>
-        </motion.div>
-      )}
 
       {/* Transaction History Link */}
       <Link
         to="/transactions"
-        className="block bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-5 text-white font-bold text-lg flex items-center justify-between hover:scale-105 transition-all shadow-xl border-2 border-purple-400 mb-3"
+        className="block bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-5 text-white font-bold text-lg flex items-center justify-between hover:scale-105 transition-all shadow-xl border-2 border-purple-400 mt-6 mb-3"
       >
         <span className="flex items-center gap-3">
           <FaHistory className="text-2xl" />
