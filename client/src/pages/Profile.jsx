@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaEdit, FaSignOutAlt, FaPhone, FaEnvelope, FaCheckCircle, FaSave, FaTimes } from 'react-icons/fa';
+import { FaEdit, FaSignOutAlt, FaPhone, FaEnvelope, FaCheckCircle, FaSave, FaTimes, FaCamera } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import useAuthStore from '../store/authStore';
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import axios from 'axios';
 
 const Profile = () => {
@@ -16,6 +16,8 @@ const Profile = () => {
   const [editedUsername, setEditedUsername] = useState(user?.username || '');
   const [editedEmail, setEditedEmail] = useState(user?.email || '');
   const [loading, setLoading] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef(null);
 
   const handleLogout = () => {
     logout();
@@ -111,6 +113,49 @@ const Profile = () => {
     }
   };
 
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size should be less than 5MB');
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const authStorage = localStorage.getItem('auth-storage');
+      const token = authStorage ? JSON.parse(authStorage).state.token : null;
+
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      const response = await axios.post(
+        '/user/avatar',
+        formData,
+        {
+          baseURL: import.meta.env.VITE_API_URL,
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+
+      updateUser({ avatar: response.data.avatar });
+      toast.success('Profile picture updated successfully!');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to upload profile picture');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#e8f5d0] p-4 pb-24">
       {/* Profile Header */}
@@ -125,6 +170,24 @@ const Profile = () => {
             alt="Avatar"
             className="w-24 h-24 rounded-full border-4 border-white shadow-xl object-cover mx-auto"
           />
+          <input
+            type="file"
+            ref={avatarInputRef}
+            accept="image/*"
+            onChange={handleAvatarChange}
+            className="hidden"
+          />
+          <button
+            onClick={() => avatarInputRef.current?.click()}
+            disabled={uploadingAvatar}
+            className="absolute bottom-0 right-0 bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-blue-600 transition-all shadow-lg disabled:opacity-50"
+          >
+            {uploadingAvatar ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+            ) : (
+              <FaCamera className="text-sm" />
+            )}
+          </button>
         </div>
         
         <div className="flex items-center justify-center gap-2 mb-2">
