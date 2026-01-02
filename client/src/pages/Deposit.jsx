@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaQrcode, FaCopy, FaUpload, FaHistory, FaCheckCircle, FaInfoCircle } from 'react-icons/fa';
+import { FaQrcode, FaCopy, FaUpload, FaHistory, FaCheckCircle, FaInfoCircle, FaTimes } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 
@@ -13,6 +13,7 @@ const Deposit = () => {
   const [screenshotPreview, setScreenshotPreview] = useState('');
   const [upiTransactionId, setUpiTransactionId] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showQRModal, setShowQRModal] = useState(false);
 
   useEffect(() => {
     fetchPaymentSettings();
@@ -46,16 +47,19 @@ const Deposit = () => {
     }
   };
 
+  const handleContinue = () => {
+    if (!amount || parseFloat(amount) < paymentSettings.minDeposit || parseFloat(amount) > paymentSettings.maxDeposit) {
+      toast.error(`Amount must be between ₹${paymentSettings.minDeposit} and ₹${paymentSettings.maxDeposit}`);
+      return;
+    }
+    setShowQRModal(true);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!paymentSettings?.isDepositEnabled) {
       toast.error('Deposits are currently disabled');
-      return;
-    }
-
-    if (!amount || parseFloat(amount) < paymentSettings.minDeposit || parseFloat(amount) > paymentSettings.maxDeposit) {
-      toast.error(`Amount must be between ₹${paymentSettings.minDeposit} and ₹${paymentSettings.maxDeposit}`);
       return;
     }
 
@@ -89,6 +93,7 @@ const Deposit = () => {
       setScreenshot(null);
       setScreenshotPreview('');
       setUpiTransactionId('');
+      setShowQRModal(false);
       
       setTimeout(() => navigate('/payment-history'), 1500);
     } catch (error) {
@@ -141,68 +146,13 @@ const Deposit = () => {
           </motion.div>
         )}
 
-       
-        {/* Payment Details */}
+        {/* Amount Entry Form */}
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.1 }}
-          className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-3xl p-6 mb-6 border-2 border-gray-700"
-        >
-          <h2 className="text-2xl font-black text-white mb-6 flex items-center gap-2">
-            <FaQrcode className="text-green-400" /> Payment Details
-          </h2>
-          
-          {paymentSettings.qrCode && (
-            <div className="flex justify-center mb-6">
-              <div className="bg-white p-6 rounded-2xl shadow-2xl">
-                <img src={paymentSettings.qrCode} alt="QR Code" className="w-64 h-64 object-contain" />
-              </div>
-            </div>
-          )}
-
-          <div className="space-y-4">
-            {paymentSettings.upiId && (
-              <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-2 border-green-500/50 rounded-2xl p-4">
-                <p className="text-gray-400 text-sm mb-2 font-semibold">UPIID</p>
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-white font-mono text-lg font-bold break-all">{paymentSettings.upiId}</p>
-                  <button
-                    onClick={() => handleCopy(paymentSettings.upiId)}
-                    className="bg-green-500 text-white p-3 rounded-xl hover:bg-green-600 transition-all flex-shrink-0"
-                  >
-                    <FaCopy />
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {paymentSettings.upiNumber && (
-              <div className="bg-gradient-to-r from-blue-500/20 to-indigo-500/20 border-2 border-blue-500/50 rounded-2xl p-4">
-                <p className="text-gray-400 text-sm mb-2 font-semibold">UPI Number</p>
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-white font-mono text-lg font-bold">{paymentSettings.upiNumber}</p>
-                  <button
-                    onClick={() => handleCopy(paymentSettings.upiNumber)}
-                    className="bg-blue-500 text-white p-3 rounded-xl hover:bg-blue-600 transition-all flex-shrink-0"
-                  >
-                    <FaCopy />
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </motion.div>
-
-        {/* Deposit Form */}
-        <motion.form
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          onSubmit={handleSubmit}
           className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-3xl p-6 border-2 border-gray-700 space-y-6"
         >
-          <h2 className="text-2xl font-black text-white mb-4">Submit Deposit Request</h2>
+          <h2 className="text-2xl font-black text-white mb-4">Enter Deposit Amount</h2>
 
           <div>
             <label className="block text-gray-300 text-sm font-semibold mb-3">Amount (₹)</label>
@@ -212,7 +162,6 @@ const Deposit = () => {
               onChange={(e) => setAmount(e.target.value)}
               placeholder={`Min: ₹${paymentSettings.minDeposit}, Max: ₹${paymentSettings.maxDeposit}`}
               className="w-full px-5 py-4 bg-gray-700/50 border-2 border-gray-600 rounded-2xl text-white text-lg font-bold focus:outline-none focus:border-green-500 transition-all"
-              required
               min={paymentSettings.minDeposit}
               max={paymentSettings.maxDeposit}
             />
@@ -231,66 +180,149 @@ const Deposit = () => {
             </div>
           </div>
 
-          <div>
-            <label className="block text-gray-300 text-sm font-semibold mb-3">UPI Transaction ID (Optional)</label>
-            <input
-              type="text"
-              value={upiTransactionId}
-              onChange={(e) => setUpiTransactionId(e.target.value)}
-              placeholder="Enter transaction ID from payment app"
-              className="w-full px-5 py-4 bg-gray-700/50 border-2 border-gray-600 rounded-2xl text-white focus:outline-none focus:border-green-500 transition-all"
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-300 text-sm font-semibold mb-3">Payment Screenshot *</label>
-            <div className="border-4 border-dashed border-gray-600 rounded-2xl p-8 text-center hover:border-green-500 transition-all">
-              {screenshotPreview ? (
-                <div className="space-y-4">
-                  <img src={screenshotPreview} alt="Preview" className="max-h-80 mx-auto rounded-2xl shadow-2xl" />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setScreenshot(null);
-                      setScreenshotPreview('');
-                    }}
-                    className="text-red-400 hover:text-red-300 font-semibold"
-                  >
-                    Remove Screenshot
-                  </button>
-                </div>
-              ) : (
-                <label className="cursor-pointer block">
-                  <FaUpload className="mx-auto text-6xl text-gray-400 mb-4" />
-                  <p className="text-white font-semibold text-lg mb-2">Click to upload screenshot</p>
-                  <p className="text-gray-400 text-sm">PNG, JPG up to 5MB</p>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="hidden"
-                    required
-                  />
-                </label>
-              )}
-            </div>
-          </div>
-
           <button
-            type="submit"
-            disabled={loading || !paymentSettings.isDepositEnabled}
+            type="button"
+            onClick={handleContinue}
+            disabled={!paymentSettings.isDepositEnabled}
             className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-5 rounded-2xl font-black text-lg hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-2xl transition-all transform hover:scale-105"
           >
-            {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                Submitting...
-              </span>
-            ) : (
-              'Submit Deposit Request'
-            )}
+            Continue to Payment
           </button>
-        </motion.form>
+        </motion.div>
+
+        {/* QR Code Modal */}
+        {showQRModal && (
+          <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-3xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto border-2 border-gray-700 shadow-2xl"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-black text-white flex items-center gap-2">
+                  <FaQrcode className="text-green-400" /> Payment Details
+                </h2>
+                <button
+                  onClick={() => setShowQRModal(false)}
+                  className="text-gray-400 hover:text-white text-2xl"
+                >
+                  <FaTimes />
+                </button>
+              </div>
+
+              <div className="bg-yellow-500/20 border-2 border-yellow-500 rounded-xl p-3 mb-6">
+                <p className="text-yellow-300 text-sm font-semibold text-center">
+                  Amount to Pay: ₹{amount}
+                </p>
+              </div>
+
+              {/* QR Code */}
+              {paymentSettings.qrCode && (
+                <div className="flex justify-center mb-6">
+                  <div className="bg-white p-6 rounded-2xl shadow-2xl">
+                    <img src={paymentSettings.qrCode} alt="QR Code" className="w-64 h-64 object-contain" />
+                  </div>
+                </div>
+              )}
+
+              {/* UPI Details */}
+              <div className="space-y-4 mb-6">
+                {paymentSettings.upiId && (
+                  <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-2 border-green-500/50 rounded-2xl p-4">
+                    <p className="text-gray-400 text-sm mb-2 font-semibold">UPI ID</p>
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-white font-mono text-lg font-bold break-all">{paymentSettings.upiId}</p>
+                      <button
+                        onClick={() => handleCopy(paymentSettings.upiId)}
+                        className="bg-green-500 text-white p-3 rounded-xl hover:bg-green-600 transition-all flex-shrink-0"
+                      >
+                        <FaCopy />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {paymentSettings.upiNumber && (
+                  <div className="bg-gradient-to-r from-blue-500/20 to-indigo-500/20 border-2 border-blue-500/50 rounded-2xl p-4">
+                    <p className="text-gray-400 text-sm mb-2 font-semibold">UPI Number</p>
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-white font-mono text-lg font-bold">{paymentSettings.upiNumber}</p>
+                      <button
+                        onClick={() => handleCopy(paymentSettings.upiNumber)}
+                        className="bg-blue-500 text-white p-3 rounded-xl hover:bg-blue-600 transition-all flex-shrink-0"
+                      >
+                        <FaCopy />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Form Below QR */}
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-gray-300 text-sm font-semibold mb-3">UPI Transaction ID (Optional)</label>
+                  <input
+                    type="text"
+                    value={upiTransactionId}
+                    onChange={(e) => setUpiTransactionId(e.target.value)}
+                    placeholder="Enter transaction ID from payment app"
+                    className="w-full px-5 py-4 bg-gray-700/50 border-2 border-gray-600 rounded-2xl text-white focus:outline-none focus:border-green-500 transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-gray-300 text-sm font-semibold mb-3">Payment Screenshot *</label>
+                  <div className="border-4 border-dashed border-gray-600 rounded-2xl p-8 text-center hover:border-green-500 transition-all">
+                    {screenshotPreview ? (
+                      <div className="space-y-4">
+                        <img src={screenshotPreview} alt="Preview" className="max-h-80 mx-auto rounded-2xl shadow-2xl" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setScreenshot(null);
+                            setScreenshotPreview('');
+                          }}
+                          className="text-red-400 hover:text-red-300 font-semibold"
+                        >
+                          Remove Screenshot
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="cursor-pointer block">
+                        <FaUpload className="mx-auto text-6xl text-gray-400 mb-4" />
+                        <p className="text-white font-semibold text-lg mb-2">Click to upload screenshot</p>
+                        <p className="text-gray-400 text-sm">PNG, JPG up to 5MB</p>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileChange}
+                          className="hidden"
+                          required
+                        />
+                      </label>
+                    )}
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-5 rounded-2xl font-black text-lg hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-2xl transition-all transform hover:scale-105"
+                >
+                  {loading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      Submitting...
+                    </span>
+                  ) : (
+                    'Submit Deposit Request'
+                  )}
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
       </div>
     </div>
   );
