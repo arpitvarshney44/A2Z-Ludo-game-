@@ -17,12 +17,16 @@ const userSchema = new mongoose.Schema({
     type: String,
     trim: true,
     lowercase: true,
-    default: null
+    default: null,
+    sparse: true,
+    index: { unique: true, sparse: true }
   },
   username: {
     type: String,
     trim: true,
-    default: null
+    default: null,
+    sparse: true,
+    index: { unique: true, sparse: true }
   },
   avatar: {
     type: String,
@@ -205,10 +209,6 @@ userSchema.methods.addWinning = async function(amount) {
   this.totalCoinsWon += amount;
   await this.save();
 };
-
-// Create sparse indexes for email and username
-userSchema.index({ email: 1 }, { unique: true, sparse: true });
-userSchema.index({ username: 1 }, { unique: true, sparse: true });
 
 const User = mongoose.model('User', userSchema);
 
