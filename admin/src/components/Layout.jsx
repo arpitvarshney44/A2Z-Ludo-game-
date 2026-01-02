@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { 
   FaHome, FaUsers, FaMoneyBill, FaGamepad, FaIdCard, FaHeadset, 
   FaCog, FaSignOutAlt, FaBars, FaTimes, FaChevronDown, FaFileAlt, FaSlidersH,
-  FaDownload, FaUpload, FaChartLine
+  FaDownload, FaUpload, FaChartLine, FaUserShield
 } from 'react-icons/fa';
 import useAdminStore from '../store/adminStore';
 import { useNavigate } from 'react-router-dom';
@@ -22,24 +22,32 @@ const Layout = () => {
     navigate('/login');
   };
 
+  // Helper function to check if user has permission
+  const hasPermission = (permission) => {
+    if (admin?.role === 'super_admin') return true;
+    return admin?.permissions?.includes(permission);
+  };
+
   const navItems = [
-    { path: '/', icon: FaHome, label: 'Dashboard' },
-    { path: '/users', icon: FaUsers, label: 'Users' },
-    { path: '/transactions', icon: FaMoneyBill, label: 'Transactions' },
-    { path: '/deposits', icon: FaDownload, label: 'Deposits' },
-    { path: '/withdrawals', icon: FaUpload, label: 'Withdrawals' },
-    { path: '/games', icon: FaGamepad, label: 'Games' },
-  //  { path: '/kyc', icon: FaIdCard, label: 'KYC' },
-    { path: '/support', icon: FaHeadset, label: 'Support' },
-    { path: '/reports', icon: FaChartLine, label: 'Reports' },
-  ];
+    { path: '/', icon: FaHome, label: 'Dashboard', permission: null },
+    { path: '/users', icon: FaUsers, label: 'Users', permission: 'manage_users' },
+    { path: '/deposits', icon: FaDownload, label: 'Deposits', permission: 'manage_deposits' },
+    { path: '/withdrawals', icon: FaUpload, label: 'Withdrawals', permission: 'manage_withdrawals' },
+    { path: '/games', icon: FaGamepad, label: 'Games', permission: 'manage_games' },
+    { path: '/support', icon: FaHeadset, label: 'Support', permission: 'manage_support' },
+    { path: '/reports', icon: FaChartLine, label: 'Reports', permission: 'view_analytics' },
+    { path: '/sub-admins', icon: FaUserShield, label: 'Sub-Admins', permission: 'manage_admins' },
+  ].filter(item => !item.permission || hasPermission(item.permission));
 
   const settingsSubItems = [
-    { path: '/settings', icon: FaSlidersH, label: 'App Config' },
-    { path: '/settings/policies', icon: FaFileAlt, label: 'Policies' },
-  ];
+    { path: '/settings', icon: FaSlidersH, label: 'App Config', permission: 'manage_settings' },
+    { path: '/settings/policies', icon: FaFileAlt, label: 'Policies', permission: 'manage_settings' },
+  ].filter(item => !item.permission || hasPermission(item.permission));
 
-  const bottomNavItems = [navItems[0], navItems[1], navItems[3], navItems[4], navItems[6]];
+  const bottomNavItems = navItems.filter(item => 
+    ['/','/ users', '/deposits', '/withdrawals', '/support'].includes(item.path)
+  ).slice(0, 5);
+  
   const closeSidebar = () => setSidebarOpen(false);
 
   const isSettingsActive = location.pathname.startsWith('/settings');

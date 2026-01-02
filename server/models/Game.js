@@ -42,12 +42,29 @@ const gameSchema = new mongoose.Schema({
     uploadedAt: {
       type: Date,
       default: null
+    },
+    result: {
+      type: String,
+      enum: ['won', 'lost', null],
+      default: null
+    },
+    resultSubmittedAt: {
+      type: Date,
+      default: null
     }
   }],
   status: {
     type: String,
-    enum: ['waiting', 'in_progress', 'completed', 'cancelled'],
+    enum: ['waiting', 'accepted', 'in_progress', 'completed', 'cancelled', 'rejected'],
     default: 'waiting'
+  },
+  gameRoomCode: {
+    type: String,
+    default: null
+  },
+  gameRoomCodeSetAt: {
+    type: Date,
+    default: null
   },
   winner: {
     type: mongoose.Schema.Types.ObjectId,

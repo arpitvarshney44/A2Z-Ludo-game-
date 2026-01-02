@@ -26,6 +26,14 @@ import {
   changeAdminPassword,
   getReports
 } from '../controllers/adminController.js';
+import {
+  getAllSubAdmins,
+  createSubAdmin,
+  updateSubAdmin,
+  deleteSubAdmin,
+  resetSubAdminPassword,
+  getAdminInfo
+} from '../controllers/subAdminController.js';
 import { adminProtect, checkPermission } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -33,9 +41,17 @@ const router = express.Router();
 router.post('/login', adminLogin);
 router.get('/dashboard', adminProtect, getDashboardStats);
 router.get('/reports', adminProtect, getReports);
+router.get('/me', adminProtect, getAdminInfo);
 
 // Admin account management
 router.put('/change-password', adminProtect, changeAdminPassword);
+
+// Sub-admin management (Super Admin only)
+router.get('/sub-admins', adminProtect, checkPermission('manage_admins'), getAllSubAdmins);
+router.post('/sub-admins', adminProtect, checkPermission('manage_admins'), createSubAdmin);
+router.put('/sub-admins/:id', adminProtect, checkPermission('manage_admins'), updateSubAdmin);
+router.delete('/sub-admins/:id', adminProtect, checkPermission('manage_admins'), deleteSubAdmin);
+router.put('/sub-admins/:id/reset-password', adminProtect, checkPermission('manage_admins'), resetSubAdminPassword);
 
 // User management
 router.get('/users', adminProtect, checkPermission('manage_users'), getAllUsers);
@@ -47,16 +63,20 @@ router.post('/users/:userId/add-funds', adminProtect, checkPermission('manage_us
 router.post('/users/:userId/deduct-funds', adminProtect, checkPermission('manage_users'), deductFundsFromUser);
 
 // Transaction management
-router.get('/transactions', adminProtect, checkPermission('manage_transactions'), getAllTransactions);
-router.put('/transaction/:id', adminProtect, checkPermission('manage_transactions'), updateTransactionStatus);
+router.get('/transactions', adminProtect, getAllTransactions);
+router.put('/transaction/:id', adminProtect, updateTransactionStatus);
+
+// Deposit management
+router.get('/deposits', adminProtect, checkPermission('manage_deposits'), getAllTransactions);
+router.put('/deposits/:id', adminProtect, checkPermission('manage_deposits'), updateTransactionStatus);
+
+// Withdrawal management
+router.get('/withdrawals', adminProtect, checkPermission('manage_withdrawals'), getAllTransactions);
+router.put('/withdrawals/:id', adminProtect, checkPermission('manage_withdrawals'), updateTransactionStatus);
 
 // Game management
 router.get('/games', adminProtect, checkPermission('manage_games'), getAllGames);
 router.post('/games/:roomCode/declare-winner', adminProtect, checkPermission('manage_games'), declareGameWinner);
-
-// KYC management
-router.get('/kyc', adminProtect, checkPermission('manage_kyc'), getAllKYCRequests);
-router.put('/kyc/:id', adminProtect, checkPermission('manage_kyc'), updateKYCStatus);
 
 // Support management
 router.get('/support', adminProtect, checkPermission('manage_support'), getAllSupportTickets);

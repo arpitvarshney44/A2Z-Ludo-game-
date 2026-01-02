@@ -27,8 +27,8 @@ const adminSchema = new mongoose.Schema({
     enum: [
       'manage_users',
       'manage_games',
-      'manage_transactions',
-      'manage_kyc',
+      'manage_deposits',
+      'manage_withdrawals',
       'manage_support',
       'manage_settings',
       'view_analytics',

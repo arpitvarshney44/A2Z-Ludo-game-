@@ -82,7 +82,11 @@ export const gameAPI = {
   uploadWinScreenshot: (formData) => api.post('/game/upload-screenshot', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
-  cancelGame: (roomCode) => api.delete(`/game/cancel/${roomCode}`)
+  cancelGame: (roomCode) => api.delete(`/game/cancel/${roomCode}`),
+  acceptBattle: (roomCode) => api.post(`/game/accept/${roomCode}`),
+  rejectBattle: (roomCode) => api.post(`/game/reject/${roomCode}`),
+  setGameRoomCode: (roomCode, gameRoomCode) => api.post(`/game/set-room-code/${roomCode}`, { gameRoomCode }),
+  submitGameResult: (roomCode, result) => api.post(`/game/submit-result/${roomCode}`, { result })
 };
 
 // Referral APIs

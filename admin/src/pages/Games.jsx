@@ -227,90 +227,81 @@ const Games = () => {
 
       {selectedGame && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={() => setSelectedGame(null)}>
-          <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 lg:p-8 w-full max-w-4xl border border-gray-700 shadow-2xl my-8" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-white flex items-center gap-2">
+          <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 w-full max-w-2xl border border-gray-700 shadow-2xl my-8" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-white flex items-center gap-2">
                 <FaGamepad className="text-purple-400" />
-                Game Details - {selectedGame.roomCode}
+                {selectedGame.roomCode}
               </h3>
               <button 
                 onClick={() => setSelectedGame(null)}
-                className="text-gray-400 hover:text-white transition-colors text-2xl"
+                className="text-gray-400 hover:text-white transition-colors text-xl"
               >
                 ✕
               </button>
             </div>
             
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-              <div className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/30 rounded-xl p-4">
-                <p className="text-gray-400 text-sm mb-2">Entry Fee</p>
-                <p className="text-white font-bold text-3xl">₹{selectedGame.entryFee}</p>
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="bg-purple-600/20 border border-purple-500/30 rounded-lg p-3">
+                <p className="text-gray-400 text-xs mb-1">Entry Fee</p>
+                <p className="text-white font-bold text-xl">₹{selectedGame.entryFee}</p>
               </div>
               
-              <div className="bg-gradient-to-r from-yellow-600/20 to-orange-600/20 border border-yellow-500/30 rounded-xl p-4">
-                <p className="text-gray-400 text-sm mb-2">Prize Pool</p>
-                <p className="text-white font-bold text-3xl">₹{selectedGame.prizePool}</p>
-              </div>
-              
-              <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
-                <p className="text-gray-400 text-sm mb-2">Status</p>
-                <span className={`px-4 py-2 rounded-lg text-sm font-semibold border inline-block ${getStatusColor(selectedGame.status)}`}>
-                  {getStatusIcon(selectedGame.status)} {selectedGame.status.replace('_', ' ')}
-                </span>
-              </div>
-              
-              <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
-                <p className="text-gray-400 text-sm mb-2">Players</p>
-                <div className="flex items-center gap-2">
-                  <FaUsers className="text-blue-400 text-xl" />
-                  <p className="text-white font-bold text-xl">{selectedGame.currentPlayers}/{selectedGame.maxPlayers}</p>
-                </div>
+              <div className="bg-yellow-600/20 border border-yellow-500/30 rounded-lg p-3">
+                <p className="text-gray-400 text-xs mb-1">Prize Pool</p>
+                <p className="text-white font-bold text-xl">₹{selectedGame.prizePool}</p>
               </div>
             </div>
 
-            <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700 mb-6">
-              <h4 className="text-white font-bold text-lg mb-4">Players & Screenshots</h4>
-              <div className="space-y-4">
+            <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700 mb-4">
+              <h4 className="text-white font-semibold text-sm mb-3">Players & Results</h4>
+              <div className="space-y-3">
                 {selectedGame.players?.map((player, idx) => (
-                  <div key={idx} className="bg-gray-700/50 rounded-xl p-4 border border-gray-600">
-                    <div className="flex items-start justify-between gap-4 flex-wrap">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                  <div key={idx} className="bg-gray-700/50 rounded-lg p-3 border border-gray-600">
+                    <div className="flex items-center justify-between gap-3 mb-2">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                           {idx + 1}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-white font-bold truncate">{player.user?.username || player.user?.phoneNumber}</p>
-                          <p className="text-gray-400 text-sm">{player.user?.phoneNumber}</p>
-                          {player.winScreenshot && (
-                            <p className="text-green-400 text-xs mt-1 flex items-center gap-1">
-                              <FaCheckCircle /> Screenshot uploaded
-                            </p>
-                          )}
+                          <p className="text-white font-semibold text-sm truncate">{player.user?.username || player.user?.phoneNumber}</p>
+                          <p className="text-gray-400 text-xs">{player.user?.phoneNumber}</p>
                         </div>
                       </div>
                       
-                      <div className="flex gap-2 flex-wrap">
-                        {player.winScreenshot && (
-                          <a
-                            href={player.winScreenshot}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2"
-                          >
-                            <FaImage /> View Screenshot
-                          </a>
-                        )}
-                        
-                        {selectedGame.status === 'in_progress' && !selectedGame.winner && (
-                          <button
-                            onClick={() => handleDeclareWinner(player.user._id)}
-                            disabled={declaring}
-                            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-50 flex items-center gap-2"
-                          >
-                            <FaTrophy /> Declare Winner
-                          </button>
-                        )}
-                      </div>
+                      {/* Result Badge */}
+                      {player.result && (
+                        <span className={`px-2 py-1 rounded text-xs font-bold ${
+                          player.result === 'won' 
+                            ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                            : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                        }`}>
+                          {player.result === 'won' ? '✓ Won' : '✕ Lost'}
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="flex gap-2 flex-wrap">
+                      {player.winScreenshot && (
+                        <a
+                          href={player.winScreenshot}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1"
+                        >
+                          <FaImage className="text-xs" /> Screenshot
+                        </a>
+                      )}
+                      
+                      {selectedGame.status === 'completed' && !selectedGame.winner && player.result === 'won' && (
+                        <button
+                          onClick={() => handleDeclareWinner(player.user._id)}
+                          disabled={declaring}
+                          className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-50 flex items-center gap-1"
+                        >
+                          <FaTrophy className="text-xs" /> Declare Winner
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -318,18 +309,18 @@ const Games = () => {
             </div>
 
             {selectedGame.winner && (
-              <div className="bg-gradient-to-r from-green-600/20 to-emerald-600/20 border border-green-500/30 rounded-xl p-4 mb-6">
-                <p className="text-gray-400 text-sm mb-2">Winner</p>
+              <div className="bg-green-600/20 border border-green-500/30 rounded-lg p-3 mb-4">
+                <p className="text-gray-400 text-xs mb-1">Winner</p>
                 <div className="flex items-center gap-2">
-                  <FaTrophy className="text-yellow-400 text-xl" />
-                  <p className="text-green-400 font-bold text-lg">{selectedGame.winner?.phoneNumber}</p>
+                  <FaTrophy className="text-yellow-400" />
+                  <p className="text-green-400 font-semibold">{selectedGame.winner?.phoneNumber}</p>
                 </div>
               </div>
             )}
             
             <button
               onClick={() => setSelectedGame(null)}
-              className="w-full bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 text-white py-3 rounded-xl font-semibold transition-all"
+              className="w-full bg-gray-700 hover:bg-gray-600 text-white py-2.5 rounded-lg font-semibold transition-all text-sm"
             >
               Close
             </button>

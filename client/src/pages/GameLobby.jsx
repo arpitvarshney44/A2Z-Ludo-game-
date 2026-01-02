@@ -37,7 +37,7 @@ const GameLobby = () => {
       const response = await gameAPI.getAvailableGames();
       const games = response.data.games || [];
       setOpenBattles(games.filter(g => g.status === 'waiting'));
-      setRunningBattles(games.filter(g => g.status === 'in_progress'));
+      setRunningBattles(games.filter(g => g.status === 'accepted' || g.status === 'in_progress'));
     } catch (error) {
       console.error('Failed to fetch battles:', error);
     }
@@ -57,31 +57,18 @@ const GameLobby = () => {
       return;
     }
 
-    // Show create modal for room code
-    setShowCreateModal(true);
-  };
-
-  const confirmCreateBattle = async () => {
-    if (!roomCode.trim()) {
-      toast.error('Please enter a room code');
-      return;
-    }
-
     setLoading(true);
     try {
       const response = await gameAPI.createGame({
-        entryFee: parseFloat(entryAmount),
-        roomCode: roomCode.trim().toUpperCase()
+        entryFee: parseFloat(entryAmount)
       });
       
-      toast.success('Battle created successfully!');
-      setShowCreateModal(false);
-      setRoomCode('');
+      toast.success('Battle created successfully! Waiting for opponent...');
       setEntryAmount('');
       fetchBattles();
       
-      // Navigate to battle room
-      navigate(`/battle/${response.data.game.roomCode}`);
+      // Keep creator on lobby page instead of redirecting
+      // navigate(`/battle/${response.data.game.roomCode}`);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to create battle');
     } finally {
@@ -97,23 +84,15 @@ const GameLobby = () => {
       return;
     }
 
-    setSelectedBattle(battle);
-    setShowJoinModal(true);
-  };
-
-  const confirmJoinBattle = async () => {
-    if (!selectedBattle) return;
-
     setLoading(true);
     try {
-      await gameAPI.joinGame(selectedBattle.roomCode);
+      await gameAPI.joinGame(battle.roomCode);
       
-      toast.success('Joined battle successfully!');
-      setShowJoinModal(false);
+      toast.success('Joined battle successfully! Funds deducted.');
       fetchBattles();
       
       // Navigate to battle room
-      navigate(`/battle/${selectedBattle.roomCode}`);
+      navigate(`/battle/${battle.roomCode}`);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to join battle');
     } finally {
@@ -123,114 +102,6 @@ const GameLobby = () => {
 
   return (
     <div className="min-h-screen bg-[#e8f5d0] p-4 pb-24">
-      {/* Create Battle Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl"
-          >
-            <h2 className="text-2xl font-black text-gray-800 mb-4 flex items-center gap-2">
-              <span className="text-3xl">🎮</span>
-              Create Battle
-            </h2>
-            
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl p-4 mb-4">
-              <p className="text-gray-700 text-sm mb-2">
-                <span className="font-bold">Entry Amount:</span> ₹{entryAmount}
-              </p>
-              <p className="text-gray-700 text-sm">
-                <span className="font-bold">Prize Pool:</span> ₹{(parseFloat(entryAmount) * 2 * ((100 - commissionRate) / 100)).toFixed(2)}
-              </p>
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-gray-700 mb-2 font-semibold">Enter Room Code</label>
-              <input
-                type="text"
-                value={roomCode}
-                onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-                placeholder="e.g., LUDO123"
-                className="w-full bg-gray-50 border-2 border-gray-300 px-4 py-3 rounded-xl text-gray-800 font-bold outline-none focus:border-blue-500 transition-all"
-                maxLength={10}
-              />
-              <p className="text-gray-500 text-xs mt-2">
-                💡 Create a unique room code for your battle
-              </p>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowCreateModal(false);
-                  setRoomCode('');
-                }}
-                className="flex-1 bg-gray-200 text-gray-800 py-3 rounded-xl font-bold hover:bg-gray-300 transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmCreateBattle}
-                disabled={loading || !roomCode.trim()}
-                className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 rounded-xl font-bold hover:scale-105 transition-all disabled:opacity-50 shadow-lg"
-              >
-                {loading ? 'Creating...' : 'Create Battle'}
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
-
-      {/* Join Battle Modal */}
-      {showJoinModal && selectedBattle && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl"
-          >
-            <h2 className="text-2xl font-black text-gray-800 mb-4 flex items-center gap-2">
-              <span className="text-3xl">⚔️</span>
-              Join Battle
-            </h2>
-            
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-xl p-4 mb-4">
-              <p className="text-gray-700 text-sm mb-2">
-                <span className="font-bold">Entry Fee:</span> ₹{selectedBattle.entryFee}
-              </p>
-              <p className="text-gray-700 text-sm">
-                <span className="font-bold">Prize Pool:</span> ₹{selectedBattle.prizePool}
-              </p>
-            </div>
-
-            <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-4 mb-4">
-              <p className="text-yellow-800 text-sm font-semibold">
-                ⚠️ ₹{selectedBattle.entryFee} will be deducted from your wallet
-              </p>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowJoinModal(false);
-                  setSelectedBattle(null);
-                }}
-                className="flex-1 bg-gray-200 text-gray-800 py-3 rounded-xl font-bold hover:bg-gray-300 transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmJoinBattle}
-                disabled={loading}
-                className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 rounded-xl font-bold hover:scale-105 transition-all disabled:opacity-50 shadow-lg"
-              >
-                {loading ? 'Joining...' : 'Join Now'}
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
 
       {/* Rules Modal */}
       {showRules && (
@@ -447,15 +318,15 @@ const GameLobby = () => {
             type="number"
             value={entryAmount}
             onChange={(e) => setEntryAmount(e.target.value)}
-            placeholder="Enter amount"
-            className="w-full bg-gray-100 border-2 border-gray-300 pl-4 pr-20 sm:pr-24 py-3 rounded-xl text-gray-800 text-base outline-none focus:border-orange-500 transition-all placeholder-gray-500"
+            placeholder="Enter Amount"
+            className="w-full bg-white border-2 border-gray-300 pl-4 pr-20 sm:pr-24 py-3 rounded-xl text-gray-800 text-base outline-none focus:border-purple-500 transition-all placeholder-gray-500"
           />
           <button
             onClick={handleCreateBattle}
             disabled={loading}
-            className="absolute right-1 top-1/2 -translate-y-1/2 bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 sm:px-6 py-2 rounded-lg font-bold text-sm sm:text-base hover:scale-105 transition-all disabled:opacity-50 shadow-lg"
+            className="absolute right-1 top-1/2 -translate-y-1/2 bg-gradient-to-r from-purple-600 to-purple-700 text-white px-4 sm:px-6 py-2 rounded-lg font-bold text-sm sm:text-base hover:scale-105 transition-all disabled:opacity-50 shadow-lg"
           >
-            {loading ? '...' : 'Create'}
+            {loading ? '...' : 'SET'}
           </button>
         </div>
 
@@ -494,9 +365,23 @@ const GameLobby = () => {
               <p className="text-gray-500 text-sm mt-2">Create one to start playing!</p>
             </div>
           ) : (
-            openBattles.map((battle, index) => {
-              // Check if current user has already joined this battle
-              const hasJoined = battle.players?.some(p => p && p.user && (p.user._id === user?.id || p.user === user?.id));
+            // Sort battles to show creator's battles first
+            [...openBattles]
+              .sort((a, b) => {
+                const aIsCreator = a.players?.[0]?.user?._id === user?.id || a.players?.[0]?.user === user?.id;
+                const bIsCreator = b.players?.[0]?.user?._id === user?.id || b.players?.[0]?.user === user?.id;
+                
+                // Creator's battles come first
+                if (aIsCreator && !bIsCreator) return -1;
+                if (!aIsCreator && bIsCreator) return 1;
+                return 0;
+              })
+              .map((battle, index) => {
+              const isCreator = battle.players && battle.players[0] && battle.players[0].user && 
+                                (battle.players[0].user._id === user?.id || battle.players[0].user === user?.id);
+              const creatorName = battle.players && battle.players[0] && battle.players[0].user 
+                                  ? (battle.players[0].user.username || battle.players[0].user.phoneNumber || 'Player')
+                                  : 'Player';
               
               return (
               <motion.div
@@ -504,57 +389,110 @@ const GameLobby = () => {
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: index * 0.05 }}
-                className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-5 shadow-xl border-2 border-green-500/30 hover:border-green-500 transition-all"
+                className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-4 shadow-xl border-2 border-gray-700"
               >
-                {/* Creator Name Header */}
-                <div className="mb-3 pb-2 border-b border-gray-700">
-                  <p className="text-gray-400 text-xs">Challenge From</p>
-                  <p className="text-white font-bold text-base">
-                    {battle.players && battle.players[0] && battle.players[0].user 
-                      ? (battle.players[0].user.username || 'Player')
-                      : 'Player'}
-                  </p>
+                {/* Header with creator name and delete button */}
+                <div className="mb-3 pb-2 border-b border-gray-700 flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-400 text-xs">Challenge From</p>
+                    <p className="text-white font-bold text-base">{creatorName}</p>
+                  </div>
+                  {isCreator && (
+                    <button
+                      onClick={async () => {
+                        if (window.confirm('Are you sure you want to cancel this battle?')) {
+                          try {
+                            const response = await gameAPI.cancelGame(battle.roomCode);
+                            toast.success(`Battle cancelled! ₹${response.data.refundedAmount} refunded`);
+                            fetchBattles();
+                          } catch (error) {
+                            toast.error(error.response?.data?.message || 'Failed to cancel');
+                          }
+                        }
+                      }}
+                      className="bg-red-500 text-white px-3 py-1 rounded-lg font-bold text-xs hover:bg-red-600 transition-all"
+                    >
+                      Delete
+                    </button>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4 flex-1">
-                    <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-black text-lg shadow-lg">
-                      🎮
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-green-400 font-bold text-sm mb-1">Room Code</p>
-                      <p className="text-white font-black text-lg truncate">
-                        {hasJoined ? battle.roomCode : '******'}
-                      </p>
-                      <p className="text-gray-400 text-xs">{battle.currentPlayers}/{battle.maxPlayers} Players</p>
+                  {/* Entry Fee */}
+                  <div>
+                    <p className="text-gray-400 text-xs mb-1">ENTRY FEE</p>
+                    <div className="flex items-center gap-1">
+                      <span className="text-green-400 text-xs">₹</span>
+                      <span className="text-green-400 font-black text-xl">{battle.entryFee}</span>
                     </div>
                   </div>
 
-                  <div className="text-right flex flex-col items-end gap-2">
-                    <span className="bg-green-500/20 border border-green-500 text-green-400 px-4 py-1 rounded-xl font-black text-lg">
-                      ₹{battle.entryFee}
-                    </span>
-                    {hasJoined ? (
-                      <div className="flex gap-1">
-                        <button
-                          disabled
-                          className="bg-gray-600 text-white px-2 py-1 rounded-lg font-semibold text-xs cursor-not-allowed opacity-70 shadow-lg flex items-center gap-1"
-                        >
-                          Joined ✓
-                        </button>
-                        <button
-                          onClick={() => navigate(`/battle/${battle.roomCode}`)}
-                          className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-2 py-1 rounded-lg font-semibold text-xs hover:scale-105 transition-all shadow-lg"
-                        >
-                          View
-                        </button>
-                      </div>
+                  {/* Prize */}
+                  <div>
+                    <p className="text-gray-400 text-xs mb-1">PRIZE</p>
+                    <div className="flex items-center gap-1">
+                      <span className="text-green-400 text-xs">₹</span>
+                      <span className="text-green-400 font-black text-xl">{battle.prizePool.toFixed(1)}</span>
+                    </div>
+                  </div>
+
+                  {/* Action Button */}
+                  <div>
+                    {isCreator ? (
+                      battle.currentPlayers === 2 && battle.status === 'waiting' ? (
+                        // Show Start and Reject buttons when opponent has joined
+                        <div className="flex gap-2">
+                          <button
+                            onClick={async () => {
+                              try {
+                                await gameAPI.acceptBattle(battle.roomCode);
+                                toast.success('Battle accepted!');
+                                navigate(`/battle/${battle.roomCode}`);
+                              } catch (error) {
+                                toast.error(error.response?.data?.message || 'Failed to accept');
+                              }
+                            }}
+                            className="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:scale-105 transition-all shadow-lg"
+                          >
+                            Start
+                          </button>
+                          <button
+                            onClick={async () => {
+                              if (window.confirm('Reject this player? They will be refunded.')) {
+                                try {
+                                  await gameAPI.rejectBattle(battle.roomCode);
+                                  toast.success('Player rejected and refunded');
+                                  fetchBattles();
+                                } catch (error) {
+                                  toast.error(error.response?.data?.message || 'Failed to reject');
+                                }
+                              }
+                            }}
+                            className="bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:scale-105 transition-all shadow-lg"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      ) : (
+                        // Show loading spinner and View button while waiting
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-400"></div>
+                          <p className="text-gray-400 text-xs">Waiting...</p>
+                          <button
+                            onClick={() => navigate(`/battle/${battle.roomCode}`)}
+                            className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-4 py-1 rounded-lg font-bold text-xs hover:scale-105 transition-all shadow-lg"
+                          >
+                            View
+                          </button>
+                        </div>
+                      )
                     ) : (
                       <button
                         onClick={() => handleJoinBattle(battle)}
-                        className="bg-gradient-to-r from-green-500 to-teal-500 text-white px-6 py-2 rounded-xl font-bold hover:scale-105 transition-all shadow-lg"
+                        disabled={loading}
+                        className="bg-gradient-to-r from-teal-400 to-teal-500 text-white px-6 py-2 rounded-xl font-bold hover:scale-105 transition-all shadow-lg disabled:opacity-50"
                       >
-                        Join
+                        PLAY
                       </button>
                     )}
                   </div>
@@ -598,12 +536,8 @@ const GameLobby = () => {
                 className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-5 shadow-xl border-2 border-orange-500/30"
               >
                 <div className="flex items-center justify-between mb-4">
-                  <p className="text-white font-bold">Playing For</p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-purple-400 font-black">{battle.roomCode.substring(0, 3)}</span>
-                    <span className="text-gray-500">&</span>
-                    <span className="text-pink-400 font-black">{battle.roomCode.substring(3)}</span>
-                  </div>
+                  <p className="text-white font-bold">Playing</p>
+                  
                 </div>
 
                 <div className="flex items-center justify-between mb-4">

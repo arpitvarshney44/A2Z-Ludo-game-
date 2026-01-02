@@ -8,7 +8,7 @@ import AppConfig from '../models/AppConfig.js';
 export const getAvailableGames = async (req, res) => {
   try {
     const games = await Game.find({
-      status: { $in: ['waiting', 'in_progress'] }
+      status: { $in: ['waiting', 'accepted', 'in_progress'] }
     })
       .populate('players.user', 'username phoneNumber avatar')
       .sort({ createdAt: -1 })
@@ -29,20 +29,14 @@ export const getAvailableGames = async (req, res) => {
 // @access  Private
 export const createGame = async (req, res) => {
   try {
-    const { entryFee, roomCode } = req.body;
+    const { entryFee } = req.body;
 
-    if (!entryFee || !roomCode) {
-      return res.status(400).json({ message: 'Entry fee and room code are required' });
+    if (!entryFee) {
+      return res.status(400).json({ message: 'Entry fee is required' });
     }
 
     if (entryFee < 10) {
       return res.status(400).json({ message: 'Minimum entry fee is ₹10' });
-    }
-
-    // Check if room code already exists
-    const existingGame = await Game.findOne({ roomCode: roomCode.toUpperCase() });
-    if (existingGame) {
-      return res.status(400).json({ message: 'Room code already exists. Please use a different code.' });
     }
 
     const user = await User.findById(req.user._id);
@@ -52,6 +46,14 @@ export const createGame = async (req, res) => {
       return res.status(400).json({ message: 'Insufficient balance' });
     }
 
+    // Generate unique room code
+    let roomCode;
+    let existingGame;
+    do {
+      roomCode = 'GAME' + Math.random().toString(36).substring(2, 8).toUpperCase();
+      existingGame = await Game.findOne({ roomCode });
+    } while (existingGame);
+
     // Get commission rate
     const commissionConfig = await AppConfig.findOne({ key: 'commissionRate' });
     const commissionRate = commissionConfig ? commissionConfig.value : 5;
@@ -59,7 +61,7 @@ export const createGame = async (req, res) => {
     // Calculate prize pool
     const prizePool = (entryFee * 2 * (100 - commissionRate)) / 100;
 
-    // Deduct entry fee from user balance
+    // Deduct entry fee from user balance (creator pays immediately)
     const deducted = await user.deductGameEntry(entryFee);
     if (!deducted) {
       return res.status(400).json({ message: 'Failed to deduct entry fee' });
@@ -67,7 +69,7 @@ export const createGame = async (req, res) => {
 
     // Create game
     const game = await Game.create({
-      roomCode: roomCode.toUpperCase(),
+      roomCode,
       entryFee,
       prizePool,
       commissionRate,
@@ -84,10 +86,10 @@ export const createGame = async (req, res) => {
       type: 'game_entry',
       amount: entryFee,
       status: 'completed',
-      description: `Game entry fee for room ${roomCode.toUpperCase()}`,
+      description: `Game entry fee for room ${roomCode}`,
       metadata: {
         gameId: game._id,
-        roomCode: roomCode.toUpperCase()
+        roomCode
       }
     });
 
@@ -151,11 +153,8 @@ export const joinGame = async (req, res) => {
     });
     game.currentPlayers += 1;
 
-    // If game is full, start it
-    if (game.currentPlayers >= game.maxPlayers) {
-      game.status = 'in_progress';
-      game.startedAt = new Date();
-    }
+    // Game stays in 'waiting' status until creator accepts
+    // Don't change to in_progress here
 
     await game.save();
 
@@ -391,5 +390,217 @@ export const cancelGame = async (req, res) => {
   } catch (error) {
     console.error('Cancel Game Error:', error);
     res.status(500).json({ message: 'Failed to cancel battle', error: error.message });
+  }
+};
+
+
+// @desc    Accept battle (creator accepts second player)
+// @route   POST /api/game/accept/:roomCode
+// @access  Private
+export const acceptBattle = async (req, res) => {
+  try {
+    const { roomCode } = req.params;
+
+    const game = await Game.findOne({ roomCode: roomCode.toUpperCase() });
+    if (!game) {
+      return res.status(404).json({ message: 'Game not found' });
+    }
+
+    // Check if user is the creator
+    if (game.players[0].user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Only the creator can accept the battle' });
+    }
+
+    // Check if game has 2 players
+    if (game.currentPlayers < 2) {
+      return res.status(400).json({ message: 'Waiting for second player to join' });
+    }
+
+    // Update status to accepted
+    game.status = 'accepted';
+    await game.save();
+
+    const populatedGame = await Game.findById(game._id)
+      .populate('players.user', 'username phoneNumber avatar');
+
+    res.status(200).json({
+      success: true,
+      message: 'Battle accepted',
+      game: populatedGame
+    });
+  } catch (error) {
+    console.error('Accept Battle Error:', error);
+    res.status(500).json({ message: 'Failed to accept battle', error: error.message });
+  }
+};
+
+// @desc    Reject battle (creator rejects second player)
+// @route   POST /api/game/reject/:roomCode
+// @access  Private
+export const rejectBattle = async (req, res) => {
+  try {
+    const { roomCode } = req.params;
+
+    const game = await Game.findOne({ roomCode: roomCode.toUpperCase() });
+    if (!game) {
+      return res.status(404).json({ message: 'Game not found' });
+    }
+
+    // Check if user is the creator
+    if (game.players[0].user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Only the creator can reject the battle' });
+    }
+
+    // Check if game has 2 players
+    if (game.currentPlayers < 2) {
+      return res.status(400).json({ message: 'No player to reject' });
+    }
+
+    // Get second player
+    const secondPlayer = await User.findById(game.players[1].user);
+    
+    // Refund second player
+    secondPlayer.depositCash += game.entryFee;
+    await secondPlayer.save();
+
+    // Create refund transaction
+    const Transaction = (await import('../models/Transaction.js')).default;
+    await Transaction.create({
+      user: secondPlayer._id,
+      type: 'refund',
+      amount: game.entryFee,
+      status: 'completed',
+      description: `Refund for rejected game ${roomCode.toUpperCase()}`,
+      metadata: {
+        gameId: game._id,
+        roomCode: roomCode.toUpperCase()
+      }
+    });
+
+    // Remove second player and update status
+    game.players.pop();
+    game.currentPlayers = 1;
+    game.status = 'waiting';
+    await game.save();
+
+    const populatedGame = await Game.findById(game._id)
+      .populate('players.user', 'username phoneNumber avatar');
+
+    res.status(200).json({
+      success: true,
+      message: 'Battle rejected and player refunded',
+      game: populatedGame
+    });
+  } catch (error) {
+    console.error('Reject Battle Error:', error);
+    res.status(500).json({ message: 'Failed to reject battle', error: error.message });
+  }
+};
+
+// @desc    Set game room code (only creator can set)
+// @route   POST /api/game/set-room-code/:roomCode
+// @access  Private
+export const setGameRoomCode = async (req, res) => {
+  try {
+    const { roomCode } = req.params;
+    const { gameRoomCode } = req.body;
+
+    if (!gameRoomCode || !gameRoomCode.trim()) {
+      return res.status(400).json({ message: 'Game room code is required' });
+    }
+
+    const game = await Game.findOne({ roomCode: roomCode.toUpperCase() });
+    if (!game) {
+      return res.status(404).json({ message: 'Game not found' });
+    }
+
+    // Check if user is the creator
+    if (game.players[0].user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Only the creator can set the room code' });
+    }
+
+    // Check if game is accepted
+    if (game.status !== 'accepted') {
+      return res.status(400).json({ message: 'Game must be accepted first' });
+    }
+
+    // Set room code and update status
+    game.gameRoomCode = gameRoomCode.trim().toUpperCase();
+    game.gameRoomCodeSetAt = new Date();
+    game.status = 'in_progress';
+    game.startedAt = new Date();
+    await game.save();
+
+    const populatedGame = await Game.findById(game._id)
+      .populate('players.user', 'username phoneNumber avatar');
+
+    res.status(200).json({
+      success: true,
+      message: 'Game room code set successfully',
+      game: populatedGame
+    });
+  } catch (error) {
+    console.error('Set Game Room Code Error:', error);
+    res.status(500).json({ message: 'Failed to set room code', error: error.message });
+  }
+};
+
+
+// @desc    Submit game result (I Won / I Lost)
+// @route   POST /api/game/submit-result/:roomCode
+// @access  Private
+export const submitGameResult = async (req, res) => {
+  try {
+    const { roomCode } = req.params;
+    const { result } = req.body; // 'won' or 'lost'
+
+    if (!result || !['won', 'lost'].includes(result)) {
+      return res.status(400).json({ message: 'Invalid result. Must be "won" or "lost"' });
+    }
+
+    const game = await Game.findOne({ roomCode: roomCode.toUpperCase() });
+    if (!game) {
+      return res.status(404).json({ message: 'Game not found' });
+    }
+
+    // Check if user is a player in this game
+    const playerIndex = game.players.findIndex(p => p.user.toString() === req.user._id.toString());
+    if (playerIndex === -1) {
+      return res.status(403).json({ message: 'You are not a player in this game' });
+    }
+
+    // Check if game is in progress
+    if (game.status !== 'in_progress') {
+      return res.status(400).json({ message: 'Game is not in progress' });
+    }
+
+    // Store the result in player data
+    if (!game.players[playerIndex].result) {
+      game.players[playerIndex].result = result;
+      game.players[playerIndex].resultSubmittedAt = new Date();
+      
+      // Check if both players have submitted results
+      const allPlayersSubmitted = game.players.every(p => p.result !== null);
+      
+      if (allPlayersSubmitted) {
+        // Mark game as completed
+        game.status = 'completed';
+        game.completedAt = new Date();
+      }
+      
+      await game.save();
+    }
+
+    const populatedGame = await Game.findById(game._id)
+      .populate('players.user', 'username phoneNumber avatar');
+
+    res.status(200).json({
+      success: true,
+      message: 'Result submitted successfully',
+      game: populatedGame
+    });
+  } catch (error) {
+    console.error('Submit Game Result Error:', error);
+    res.status(500).json({ message: 'Failed to submit result', error: error.message });
   }
 };

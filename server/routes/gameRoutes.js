@@ -8,7 +8,11 @@ import {
   getGameDetails,
   uploadWinScreenshot,
   getMyGames,
-  cancelGame
+  cancelGame,
+  acceptBattle,
+  rejectBattle,
+  setGameRoomCode,
+  submitGameResult
 } from '../controllers/gameController.js';
 import { protect } from '../middleware/auth.js';
 
@@ -49,5 +53,9 @@ router.get('/my-games', protect, getMyGames);
 router.get('/:roomCode', protect, getGameDetails);
 router.post('/upload-screenshot', protect, upload.single('screenshot'), uploadWinScreenshot);
 router.delete('/cancel/:roomCode', protect, cancelGame);
+router.post('/accept/:roomCode', protect, acceptBattle);
+router.post('/reject/:roomCode', protect, rejectBattle);
+router.post('/set-room-code/:roomCode', protect, setGameRoomCode);
+router.post('/submit-result/:roomCode', protect, submitGameResult);
 
 export default router;
