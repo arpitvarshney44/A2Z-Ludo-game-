@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { 
   FaHome, FaUsers, FaMoneyBill, FaGamepad, FaIdCard, FaHeadset, 
   FaCog, FaSignOutAlt, FaBars, FaTimes, FaChevronDown, FaFileAlt, FaSlidersH,
-  FaDownload, FaUpload
+  FaDownload, FaUpload, FaChartLine
 } from 'react-icons/fa';
 import useAdminStore from '../store/adminStore';
 import { useNavigate } from 'react-router-dom';
@@ -31,6 +31,7 @@ const Layout = () => {
     { path: '/games', icon: FaGamepad, label: 'Games' },
     { path: '/kyc', icon: FaIdCard, label: 'KYC' },
     { path: '/support', icon: FaHeadset, label: 'Support' },
+    { path: '/reports', icon: FaChartLine, label: 'Reports' },
   ];
 
   const settingsSubItems = [

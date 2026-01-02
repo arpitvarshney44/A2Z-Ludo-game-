@@ -168,34 +168,45 @@ const KYC = () => {
   }
 
   // Already verified
-  if (user?.isKYCVerified) {
+  if (user?.isKYCVerified || user?.kycDetails?.status === 'approved' || kycStatus?.status === 'approved') {
+    const displayName = kycStatus?.fullName || user?.kycDetails?.fullName || 'N/A';
+    const displayDocType = kycStatus?.documentType || user?.kycDetails?.documentType || 'N/A';
+    
     return (
       <div className="min-h-screen bg-[#e8f5d0] p-4 pb-24 flex items-center justify-center">
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="text-center bg-white rounded-3xl p-8 border-2 border-green-500 shadow-xl"
+          className="text-center bg-white rounded-3xl p-8 border-2 border-green-500 shadow-xl max-w-md w-full"
         >
           <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <FaCheckCircle className="text-4xl text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">KYC Verified</h2>
-          <p className="text-gray-600">Your identity has been verified successfully</p>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">KYC Verified ✓</h2>
+          <p className="text-gray-600 mb-4">Your identity has been verified successfully</p>
+          <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+            <p className="text-sm text-gray-700 mb-1">
+              <span className="font-semibold">Name:</span> {displayName}
+            </p>
+            <p className="text-sm text-gray-700">
+              <span className="font-semibold">Document:</span> {displayDocType.toUpperCase()}
+            </p>
+          </div>
         </motion.div>
       </div>
     );
   }
 
-  // Pending verification
+  // Pending verification - only show if explicitly pending
   if (kycStatus?.status === 'pending') {
     return (
       <div className="min-h-screen bg-[#e8f5d0] p-4 pb-24 flex items-center justify-center">
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="text-center bg-white rounded-3xl p-8 border-2 border-yellow-500 shadow-xl"
+          className="text-center bg-white rounded-3xl p-8 border-2 border-yellow-500 shadow-xl max-w-md w-full"
         >
-          <div className="w-20 h-20 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-20 h-20 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
             <FaClock className="text-4xl text-white" />
           </div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Verification Pending</h2>
@@ -206,10 +217,14 @@ const KYC = () => {
     );
   }
 
-  // Rejected - allow resubmission
-  if (kycStatus?.status === 'rejected') {
-    return (
-      <div className="min-h-screen bg-[#e8f5d0] p-4 pb-24">
+  // Check if rejected
+  const isRejected = kycStatus?.status === 'rejected';
+  const rejectionReason = kycStatus?.rejectionReason || user?.kycDetails?.rejectionReason;
+
+  // Show form for not submitted or rejected status
+  return (
+    <div className="min-h-screen bg-[#e8f5d0] p-4 pb-24">
+      {isRejected && (
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -219,15 +234,10 @@ const KYC = () => {
             <FaTimesCircle className="text-red-600 text-xl" />
             <h3 className="text-red-600 font-bold">KYC Rejected</h3>
           </div>
-          <p className="text-gray-700 text-sm">{kycStatus.rejectionReason || 'Please resubmit with valid documents'}</p>
+          <p className="text-gray-700 text-sm">{rejectionReason || 'Please resubmit with valid documents'}</p>
         </motion.div>
-        {renderForm()}
-      </div>
-    );
-  }
-
-  function renderForm() {
-    return (
+      )}
+      <h1 className="text-2xl font-bold text-gray-800 mb-6">KYC Verification</h1>
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -352,13 +362,6 @@ const KYC = () => {
           </button>
         </form>
       </motion.div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-[#e8f5d0] p-4 pb-24">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">KYC Verification</h1>
-      {renderForm()}
     </div>
   );
 };

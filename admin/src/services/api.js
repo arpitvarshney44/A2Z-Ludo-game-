@@ -39,16 +39,24 @@ api.interceptors.response.use(
 export const adminAPI = {
   login: (email, password) => api.post('/admin/login', { email, password }),
   getDashboard: () => api.get('/admin/dashboard'),
+  getReports: (dateRange, startDate, endDate) => 
+    api.get(`/admin/reports?dateRange=${dateRange}&startDate=${startDate || ''}&endDate=${endDate || ''}`),
   getUsers: (page, limit, search) => api.get(`/admin/users?page=${page}&limit=${limit}&search=${search || ''}`),
   getUserById: (id) => api.get(`/admin/user/${id}`),
   blockUser: (id) => api.put(`/admin/user/${id}/block`),
   unblockUser: (id) => api.put(`/admin/user/${id}/unblock`),
+  addFunds: (userId, amount, type, reason) =>
+    api.post(`/admin/users/${userId}/add-funds`, { amount, type, reason }),
+  deductFunds: (userId, amount, type, reason) =>
+    api.post(`/admin/users/${userId}/deduct-funds`, { amount, type, reason }),
   getTransactions: (page, limit, type, status) => 
     api.get(`/admin/transactions?page=${page}&limit=${limit}&type=${type || ''}&status=${status || ''}`),
   updateTransaction: (id, status, adminNotes) => 
     api.put(`/admin/transaction/${id}`, { status, adminNotes }),
   getGames: (page, limit, status) => 
     api.get(`/admin/games?page=${page}&limit=${limit}&status=${status || ''}`),
+  declareWinner: (roomCode, winnerId) =>
+    api.post(`/admin/games/${roomCode}/declare-winner`, { winnerId }),
   getKYCRequests: (page, limit, status) => 
     api.get(`/admin/kyc?page=${page}&limit=${limit}&status=${status || 'pending'}`),
   updateKYC: (id, status, rejectionReason) => 

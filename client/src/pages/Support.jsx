@@ -32,7 +32,7 @@ const Support = () => {
       <div className="grid grid-cols-2 gap-4 mb-6">
         {/* WhatsApp Card */}
         <motion.a
-          href="https://wa.me/918441952800"
+          href="https://wa.me/919024608772"
           target="_blank"
           rel="noopener noreferrer"
           initial={{ x: -20, opacity: 0 }}
@@ -78,10 +78,10 @@ const Support = () => {
           <div>
             <h4 className="text-gray-800 font-bold text-lg mb-1">Phone Support</h4>
             <a 
-              href="tel:8078614076" 
+              href="tel:9024608772"
               className="text-blue-500 text-2xl font-black hover:underline"
             >
-              8078614076
+              9024608772
             </a>
           </div>
         </div>

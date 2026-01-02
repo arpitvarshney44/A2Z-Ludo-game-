@@ -347,26 +347,270 @@ export const updateTransactionStatus = async (req, res) => {
 };
 
 // @desc    Get all games
+// @desc    Get all games
 // @route   GET /api/admin/games
 // @access  Private (Admin)
 export const getAllGames = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const limit = parseInt(req.query.limit) || 50;
+    const skip = (page - 1) * limit;
+    const status = req.query.status;
 
-    // Return empty games list since game functionality is removed
+    // Import Game model
+    const Game = (await import('../models/Game.js')).default;
+
+    // Build query
+    let query = {};
+    if (status && status !== 'all' && status !== '') {
+      query.status = status;
+    }
+
+    const games = await Game.find(query)
+      .populate('players.user', 'username phoneNumber avatar')
+      .populate('winner', 'username phoneNumber avatar')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await Game.countDocuments(query);
+
     res.status(200).json({
-      games: [],
+      games,
       pagination: {
         page,
         limit,
-        total: 0,
-        pages: 0
+        total,
+        pages: Math.ceil(total / limit)
       }
     });
   } catch (error) {
     console.error('Get All Games Error:', error);
     res.status(500).json({ message: 'Failed to get games', error: error.message });
+  }
+};
+
+// @desc    Declare game winner
+// @route   POST /api/admin/games/:roomCode/declare-winner
+// @access  Private (Admin)
+export const declareGameWinner = async (req, res) => {
+  try {
+    const { roomCode } = req.params;
+    const { winnerId } = req.body;
+
+    if (!winnerId) {
+      return res.status(400).json({ message: 'Winner ID is required' });
+    }
+
+    // Import Game model
+    const Game = (await import('../models/Game.js')).default;
+
+    const game = await Game.findOne({ roomCode: roomCode.toUpperCase() })
+      .populate('players.user', 'username phoneNumber avatar');
+
+    if (!game) {
+      return res.status(404).json({ message: 'Game not found' });
+    }
+
+    if (game.status === 'completed') {
+      return res.status(400).json({ message: 'Game already completed' });
+    }
+
+    if (game.status !== 'in_progress') {
+      return res.status(400).json({ message: 'Can only declare winner for games in progress' });
+    }
+
+    // Check if winner is a player in the game
+    const isPlayer = game.players.some(p => p.user._id.toString() === winnerId);
+    if (!isPlayer) {
+      return res.status(400).json({ message: 'Winner must be a player in the game' });
+    }
+
+    // Check if winning transaction already exists (prevent duplicate)
+    const Transaction = (await import('../models/Transaction.js')).default;
+    const existingWinTransaction = await Transaction.findOne({
+      user: winnerId,
+      type: 'game_win',
+      'metadata.gameId': game._id
+    });
+
+    if (existingWinTransaction) {
+      return res.status(400).json({ message: 'Winner already declared for this game' });
+    }
+
+    // Update game
+    game.winner = winnerId;
+    game.status = 'completed';
+    game.completedAt = new Date();
+    await game.save();
+
+    // Credit winner
+    const winner = await User.findById(winnerId);
+    winner.winningCash += game.prizePool;
+    winner.totalCoinsWon += game.prizePool;
+    winner.totalGamesWon += 1;
+    winner.totalGamesPlayed += 1;
+    await winner.save();
+
+    // Create winning transaction
+    await Transaction.create({
+      user: winnerId,
+      type: 'game_win',
+      amount: game.prizePool,
+      status: 'completed',
+      description: `Game winning for room ${roomCode.toUpperCase()}`,
+      metadata: {
+        gameId: game._id,
+        roomCode: roomCode.toUpperCase()
+      }
+    });
+
+    // Update loser stats
+    const loserId = game.players.find(p => p.user._id.toString() !== winnerId).user._id;
+    const loser = await User.findById(loserId);
+    loser.totalGamesLost += 1;
+    loser.totalGamesPlayed += 1;
+    await loser.save();
+
+    // Handle referral commission (3% of entry fee)
+    if (winner.referredBy) {
+      const referrer = await User.findOne({ referralCode: winner.referredBy });
+      if (referrer) {
+        const commission = game.entryFee * 0.03;
+        referrer.referralEarnings += commission;
+        referrer.bonusCash += commission;
+        await referrer.save();
+      }
+    }
+
+    const populatedGame = await Game.findById(game._id)
+      .populate('players.user', 'username phoneNumber avatar')
+      .populate('winner', 'username phoneNumber avatar');
+
+    res.status(200).json({
+      success: true,
+      message: 'Winner declared successfully',
+      game: populatedGame
+    });
+  } catch (error) {
+    console.error('Declare Winner Error:', error);
+    res.status(500).json({ message: 'Failed to declare winner', error: error.message });
+  }
+};
+
+// @desc    Manually add funds to user
+// @route   POST /api/admin/users/:userId/add-funds
+// @access  Private (Admin)
+export const addFundsToUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { amount, type, reason } = req.body;
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ message: 'Valid amount is required' });
+    }
+
+    if (!type || !['deposit', 'winning', 'bonus'].includes(type)) {
+      return res.status(400).json({ message: 'Type must be deposit, winning, or bonus' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Add funds based on type
+    if (type === 'deposit') {
+      user.depositCash += amount;
+    } else if (type === 'winning') {
+      user.winningCash += amount;
+    } else if (type === 'bonus') {
+      user.bonusCash += amount;
+    }
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: `₹${amount} added to ${type} cash successfully`,
+      user: {
+        id: user._id,
+        phoneNumber: user.phoneNumber,
+        depositCash: user.depositCash,
+        winningCash: user.winningCash,
+        bonusCash: user.bonusCash,
+        totalBalance: user.getTotalBalance()
+      }
+    });
+  } catch (error) {
+    console.error('Add Funds Error:', error);
+    res.status(500).json({ message: 'Failed to add funds', error: error.message });
+  }
+};
+
+// @desc    Manually deduct funds from user
+// @route   POST /api/admin/users/:userId/deduct-funds
+// @access  Private (Admin)
+export const deductFundsFromUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { amount, type, reason } = req.body;
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ message: 'Valid amount is required' });
+    }
+
+    if (!type || !['deposit', 'winning', 'bonus'].includes(type)) {
+      return res.status(400).json({ message: 'Type must be deposit, winning, or bonus' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Check if user has sufficient balance
+    let currentBalance = 0;
+    if (type === 'deposit') {
+      currentBalance = user.depositCash;
+    } else if (type === 'winning') {
+      currentBalance = user.winningCash;
+    } else if (type === 'bonus') {
+      currentBalance = user.bonusCash;
+    }
+
+    if (currentBalance < amount) {
+      return res.status(400).json({ 
+        message: `Insufficient ${type} cash. Available: ₹${currentBalance}` 
+      });
+    }
+
+    // Deduct funds based on type
+    if (type === 'deposit') {
+      user.depositCash -= amount;
+    } else if (type === 'winning') {
+      user.winningCash -= amount;
+    } else if (type === 'bonus') {
+      user.bonusCash -= amount;
+    }
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: `₹${amount} deducted from ${type} cash successfully`,
+      user: {
+        id: user._id,
+        phoneNumber: user.phoneNumber,
+        depositCash: user.depositCash,
+        winningCash: user.winningCash,
+        bonusCash: user.bonusCash,
+        totalBalance: user.getTotalBalance()
+      }
+    });
+  } catch (error) {
+    console.error('Deduct Funds Error:', error);
+    res.status(500).json({ message: 'Failed to deduct funds', error: error.message });
   }
 };
 
@@ -723,5 +967,258 @@ export const changeAdminPassword = async (req, res) => {
   } catch (error) {
     console.error('Change Password Error:', error);
     res.status(500).json({ message: 'Failed to change password', error: error.message });
+  }
+};
+
+// @desc    Get comprehensive platform reports
+// @route   GET /api/admin/reports
+// @access  Private (Admin)
+export const getReports = async (req, res) => {
+  try {
+    const { dateRange, startDate, endDate } = req.query;
+
+    // Calculate date range
+    let start, end;
+    end = new Date();
+    
+    switch (dateRange) {
+      case 'today':
+        start = new Date();
+        start.setHours(0, 0, 0, 0);
+        break;
+      case '7days':
+        start = new Date();
+        start.setDate(start.getDate() - 7);
+        break;
+      case '30days':
+        start = new Date();
+        start.setDate(start.getDate() - 30);
+        break;
+      case '90days':
+        start = new Date();
+        start.setDate(start.getDate() - 90);
+        break;
+      case 'custom':
+        if (startDate && endDate) {
+          start = new Date(startDate);
+          end = new Date(endDate);
+        } else {
+          start = new Date();
+          start.setDate(start.getDate() - 30);
+        }
+        break;
+      default:
+        start = new Date();
+        start.setDate(start.getDate() - 7);
+    }
+
+    // Import Game model
+    const Game = (await import('../models/Game.js')).default;
+
+    // Get previous period for comparison
+    const periodDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+    const prevStart = new Date(start);
+    prevStart.setDate(prevStart.getDate() - periodDays);
+    const prevEnd = new Date(start);
+
+    // === OVERVIEW STATS ===
+    const totalUsers = await User.countDocuments();
+    const prevTotalUsers = await User.countDocuments({ createdAt: { $lt: prevEnd } });
+    const userGrowth = prevTotalUsers > 0 ? (((totalUsers - prevTotalUsers) / prevTotalUsers) * 100).toFixed(1) : 0;
+
+    const totalGames = await Game.countDocuments({ createdAt: { $gte: start, $lte: end } });
+    const prevTotalGames = await Game.countDocuments({ createdAt: { $gte: prevStart, $lt: prevEnd } });
+    const gamesChange = prevTotalGames > 0 ? (((totalGames - prevTotalGames) / prevTotalGames) * 100).toFixed(1) : 0;
+
+    // Revenue calculations
+    const completedGames = await Game.find({ 
+      status: 'completed',
+      createdAt: { $gte: start, $lte: end }
+    });
+    
+    const totalRevenue = completedGames.reduce((sum, game) => {
+      const commission = (game.entryFee * 2 * game.commissionRate) / 100;
+      return sum + commission;
+    }, 0);
+
+    const prevCompletedGames = await Game.find({ 
+      status: 'completed',
+      createdAt: { $gte: prevStart, $lt: prevEnd }
+    });
+    
+    const prevRevenue = prevCompletedGames.reduce((sum, game) => {
+      const commission = (game.entryFee * 2 * game.commissionRate) / 100;
+      return sum + commission;
+    }, 0);
+
+    const revenueChange = prevRevenue > 0 ? (((totalRevenue - prevRevenue) / prevRevenue) * 100).toFixed(1) : 0;
+
+    const totalCommission = totalRevenue;
+    const commissionChange = revenueChange;
+
+    // === USER STATS ===
+    const activeUsers = await User.countDocuments({ isActive: true });
+    const inactiveUsers = await User.countDocuments({ isActive: false, isBlocked: false });
+    const blockedUsers = await User.countDocuments({ isBlocked: true });
+    const newUsers = await User.countDocuments({ createdAt: { $gte: start, $lte: end } });
+    const verifiedUsers = await User.countDocuments({ isKYCVerified: true });
+
+    // === GAME STATS ===
+    const completedGamesCount = await Game.countDocuments({ 
+      status: 'completed',
+      createdAt: { $gte: start, $lte: end }
+    });
+    const inProgressGames = await Game.countDocuments({ status: 'in_progress' });
+    const cancelledGames = await Game.countDocuments({ 
+      status: 'cancelled',
+      createdAt: { $gte: start, $lte: end }
+    });
+
+    const avgEntryFeeResult = await Game.aggregate([
+      { $match: { createdAt: { $gte: start, $lte: end } } },
+      { $group: { _id: null, avgFee: { $avg: '$entryFee' } } }
+    ]);
+    const avgEntryFee = avgEntryFeeResult[0]?.avgFee?.toFixed(2) || 0;
+
+    // === TRANSACTION STATS ===
+    const deposits = await Transaction.aggregate([
+      { $match: { type: 'deposit', status: 'completed', createdAt: { $gte: start, $lte: end } } },
+      { $group: { _id: null, count: { $sum: 1 }, amount: { $sum: '$amount' } } }
+    ]);
+
+    const withdrawals = await Transaction.aggregate([
+      { $match: { type: 'withdrawal', status: 'completed', createdAt: { $gte: start, $lte: end } } },
+      { $group: { _id: null, count: { $sum: 1 }, amount: { $sum: '$amount' } } }
+    ]);
+
+    const gameEntries = await Transaction.aggregate([
+      { $match: { type: 'game_entry', status: 'completed', createdAt: { $gte: start, $lte: end } } },
+      { $group: { _id: null, count: { $sum: 1 }, amount: { $sum: '$amount' } } }
+    ]);
+
+    const winnings = await Transaction.aggregate([
+      { $match: { type: 'game_win', status: 'completed', createdAt: { $gte: start, $lte: end } } },
+      { $group: { _id: null, count: { $sum: 1 }, amount: { $sum: '$amount' } } }
+    ]);
+
+    const refunds = await Transaction.aggregate([
+      { $match: { type: 'refund', status: 'completed', createdAt: { $gte: start, $lte: end } } },
+      { $group: { _id: null, count: { $sum: 1 }, amount: { $sum: '$amount' } } }
+    ]);
+
+    // === REVENUE BREAKDOWN ===
+    const totalDeposits = deposits[0]?.amount || 0;
+    const totalWithdrawals = withdrawals[0]?.amount || 0;
+    const netProfit = totalRevenue - totalWithdrawals;
+
+    // === TRENDS DATA (Daily breakdown) ===
+    const days = Math.min(periodDays, 30); // Max 30 days for chart
+    const trends = {
+      dates: [],
+      revenue: [],
+      commission: [],
+      gamesPlayed: []
+    };
+
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date(end);
+      date.setDate(date.getDate() - i);
+      const nextDate = new Date(date);
+      nextDate.setDate(nextDate.getDate() + 1);
+
+      trends.dates.push(date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }));
+
+      // Daily games
+      const dailyGames = await Game.countDocuments({
+        createdAt: { $gte: date, $lt: nextDate }
+      });
+      trends.gamesPlayed.push(dailyGames);
+
+      // Daily revenue
+      const dailyCompletedGames = await Game.find({
+        status: 'completed',
+        createdAt: { $gte: date, $lt: nextDate }
+      });
+
+      const dailyRevenue = dailyCompletedGames.reduce((sum, game) => {
+        const commission = (game.entryFee * 2 * game.commissionRate) / 100;
+        return sum + commission;
+      }, 0);
+
+      trends.revenue.push(dailyRevenue);
+      trends.commission.push(dailyRevenue);
+    }
+
+    // === COMPILE REPORT ===
+    const report = {
+      overview: {
+        totalRevenue: Math.round(totalRevenue),
+        revenueChange: parseFloat(revenueChange),
+        totalUsers,
+        userGrowth: parseFloat(userGrowth),
+        totalGames,
+        gamesChange: parseFloat(gamesChange),
+        totalCommission: Math.round(totalCommission),
+        commissionChange: parseFloat(commissionChange)
+      },
+      users: {
+        totalUsers,
+        activeUsers,
+        inactiveUsers,
+        blockedUsers,
+        newUsers,
+        verifiedUsers
+      },
+      games: {
+        totalGames,
+        completed: completedGamesCount,
+        inProgress: inProgressGames,
+        cancelled: cancelledGames,
+        avgEntryFee
+      },
+      transactions: {
+        deposits: {
+          count: deposits[0]?.count || 0,
+          amount: Math.round(deposits[0]?.amount || 0)
+        },
+        withdrawals: {
+          count: withdrawals[0]?.count || 0,
+          amount: Math.round(withdrawals[0]?.amount || 0)
+        },
+        gameEntries: {
+          count: gameEntries[0]?.count || 0,
+          amount: Math.round(gameEntries[0]?.amount || 0)
+        },
+        winnings: {
+          count: winnings[0]?.count || 0,
+          amount: Math.round(winnings[0]?.amount || 0)
+        },
+        refunds: {
+          count: refunds[0]?.count || 0,
+          amount: Math.round(refunds[0]?.amount || 0)
+        }
+      },
+      revenue: {
+        totalRevenue: Math.round(totalRevenue),
+        commission: Math.round(totalCommission),
+        deposits: Math.round(totalDeposits),
+        withdrawals: Math.round(totalWithdrawals),
+        netProfit: Math.round(netProfit)
+      },
+      trends
+    };
+
+    res.status(200).json({
+      success: true,
+      report,
+      dateRange: {
+        start,
+        end,
+        days: periodDays
+      }
+    });
+  } catch (error) {
+    console.error('Get Reports Error:', error);
+    res.status(500).json({ message: 'Failed to generate reports', error: error.message });
   }
 };

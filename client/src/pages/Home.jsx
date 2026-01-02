@@ -71,7 +71,7 @@ const Home = () => {
 
         {/* Support Card */}
         <motion.a
-          href="https://wa.me/918441952800"
+          href="https://wa.me/919024608772"
           target="_blank"
           rel="noopener noreferrer"
           initial={{ x: 20, opacity: 0 }}

@@ -171,3 +171,65 @@ export const getUserStats = async (req, res) => {
     res.status(500).json({ message: 'Failed to get user stats', error: error.message });
   }
 };
+
+// @desc    Apply referral code
+// @route   POST /api/user/apply-referral
+// @access  Private
+export const applyReferralCode = async (req, res) => {
+  try {
+    const { referralCode } = req.body;
+
+    if (!referralCode) {
+      return res.status(400).json({ message: 'Referral code is required' });
+    }
+
+    const user = await User.findById(req.user._id);
+
+    // Check if user already has a referral code applied
+    if (user.referredBy) {
+      return res.status(400).json({ message: 'You have already applied a referral code' });
+    }
+
+    // Find the referrer
+    const referrer = await User.findOne({ referralCode: referralCode.toUpperCase() });
+
+    if (!referrer) {
+      return res.status(404).json({ message: 'Invalid referral code' });
+    }
+
+    // Check if user is trying to use their own code
+    if (referrer._id.toString() === user._id.toString()) {
+      return res.status(400).json({ message: 'You cannot use your own referral code' });
+    }
+
+    // Get referral bonus from config
+    const AppConfig = (await import('../models/AppConfig.js')).default;
+    const referralBonusConfig = await AppConfig.findOne({ key: 'referralBonus' });
+    const referralBonus = referralBonusConfig ? referralBonusConfig.value : 25;
+
+    // Apply referral code
+    user.referredBy = referralCode.toUpperCase();
+    user.bonusCash += referralBonus; // Bonus for the user who applied the code
+    await user.save();
+
+    // Add bonus to referrer
+    referrer.referralEarnings += referralBonus;
+    referrer.bonusCash += referralBonus;
+    referrer.referredUsers.push(user._id);
+    await referrer.save();
+
+    res.status(200).json({
+      message: `Referral code applied successfully! You received ₹${referralBonus} bonus`,
+      user: {
+        id: user._id,
+        phoneNumber: user.phoneNumber,
+        referredBy: user.referredBy,
+        bonusCash: user.bonusCash,
+        totalBalance: user.getTotalBalance()
+      }
+    });
+  } catch (error) {
+    console.error('Apply Referral Code Error:', error);
+    res.status(500).json({ message: 'Failed to apply referral code', error: error.message });
+  }
+};

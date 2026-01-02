@@ -114,7 +114,7 @@ const Refer = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 mb-6">
         {/* Referred Players Card */}
         <motion.div
           initial={{ x: -20, opacity: 0 }}
@@ -151,6 +151,64 @@ const Refer = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* Referred Users List */}
+      {referredUsers.length > 0 && (
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          className="mb-6"
+        >
+          <h2 className="text-gray-800 font-bold text-xl mb-4">Your Referrals</h2>
+          <div className="space-y-3">
+            {referredUsers.map((referredUser, index) => (
+              <motion.div
+                key={referredUser.id}
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.4 + (index * 0.05) }}
+                className="bg-white rounded-2xl p-4 shadow-lg flex items-center gap-4"
+              >
+                <img
+                  src={referredUser.avatar || 'https://via.placeholder.com/50'}
+                  alt={referredUser.username}
+                  className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
+                />
+                <div className="flex-1">
+                  <p className="text-gray-800 font-bold text-lg">
+                    {referredUser.username || 'User'}
+                  </p>
+                  <p className="text-gray-600 text-sm">
+                    {referredUser.phoneNumber}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-gray-600 text-xs">Games Played</p>
+                  <p className="text-gray-800 font-bold text-lg">
+                    {referredUser.totalGamesPlayed || 0}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
+      {referredUsers.length === 0 && (
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          className="bg-white rounded-3xl p-8 text-center shadow-lg"
+        >
+          <div className="text-6xl mb-4">👥</div>
+          <h3 className="text-gray-800 font-bold text-xl mb-2">No Referrals Yet</h3>
+          <p className="text-gray-600">
+            Share your referral code with friends to start earning!
+          </p>
+        </motion.div>
+      )}
     </div>
   );
 };

@@ -8,7 +8,7 @@ const transactionSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['deposit', 'withdrawal', 'game_entry', 'game_win', 'referral_bonus', 'bonus'],
+    enum: ['deposit', 'withdrawal', 'game_entry', 'game_win', 'referral_bonus', 'bonus', 'refund'],
     required: true
   },
   amount: {
@@ -42,6 +42,10 @@ const transactionSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Game',
     default: null
+  },
+  metadata: {
+    type: mongoose.Schema.Types.Mixed,
+    default: {}
   },
   withdrawalDetails: {
     accountHolderName: String,

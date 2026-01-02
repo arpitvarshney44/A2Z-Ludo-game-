@@ -14,6 +14,7 @@ import KYC from './pages/KYC';
 import Support from './pages/Support';
 import Settings from './pages/Settings';
 import Policies from './pages/Policies';
+import Reports from './pages/Reports';
 
 // Layout
 import Layout from './components/Layout';
@@ -37,6 +38,7 @@ function App() {
           <Route path="/games" element={isAuthenticated ? <Games /> : <Navigate to="/login" />} />
           <Route path="/kyc" element={isAuthenticated ? <KYC /> : <Navigate to="/login" />} />
           <Route path="/support" element={isAuthenticated ? <Support /> : <Navigate to="/login" />} />
+          <Route path="/reports" element={isAuthenticated ? <Reports /> : <Navigate to="/login" />} />
           <Route path="/settings" element={isAuthenticated ? <Settings /> : <Navigate to="/login" />} />
           <Route path="/settings/policies" element={isAuthenticated ? <Policies /> : <Navigate to="/login" />} />
         </Route>

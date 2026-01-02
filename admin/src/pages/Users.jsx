@@ -16,6 +16,12 @@ const Users = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(null);
   const [filter, setFilter] = useState('all');
+  const [showFundModal, setShowFundModal] = useState(false);
+  const [fundAction, setFundAction] = useState('add'); // 'add' or 'deduct'
+  const [fundAmount, setFundAmount] = useState('');
+  const [fundType, setFundType] = useState('deposit'); // 'deposit', 'winning', 'bonus'
+  const [fundReason, setFundReason] = useState('');
+  const [fundLoading, setFundLoading] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -87,6 +93,43 @@ const Users = () => {
   const handleSearch = (e) => {
     e.preventDefault();
     fetchUsers();
+  };
+
+  const openFundModal = (action) => {
+    setFundAction(action);
+    setFundAmount('');
+    setFundType('deposit');
+    setFundReason('');
+    setShowFundModal(true);
+  };
+
+  const handleFundManagement = async () => {
+    if (!fundAmount || parseFloat(fundAmount) <= 0) {
+      toast.error('Please enter a valid amount');
+      return;
+    }
+
+    setFundLoading(true);
+    try {
+      if (fundAction === 'add') {
+        await adminAPI.addFunds(selectedUser._id, parseFloat(fundAmount), fundType, fundReason);
+        toast.success(`₹${fundAmount} added to ${fundType} cash successfully!`);
+      } else {
+        await adminAPI.deductFunds(selectedUser._id, parseFloat(fundAmount), fundType, fundReason);
+        toast.success(`₹${fundAmount} deducted from ${fundType} cash successfully!`);
+      }
+      
+      setShowFundModal(false);
+      fetchUsers();
+      
+      // Update selected user
+      const response = await adminAPI.getUserById(selectedUser._id);
+      setSelectedUser(response.data.user);
+    } catch (error) {
+      toast.error(error.response?.data?.message || `Failed to ${fundAction} funds`);
+    } finally {
+      setFundLoading(false);
+    }
   };
 
   const filteredUsers = users.filter(user => {
@@ -428,6 +471,22 @@ const Users = () => {
                       <p className="text-purple-400 font-semibold">₹{selectedUser.referralEarnings || 0}</p>
                     </div>
                   </div>
+                  
+                  {/* Fund Management Buttons */}
+                  <div className="mt-4 pt-4 border-t border-gray-700 flex gap-2">
+                    <button
+                      onClick={() => openFundModal('add')}
+                      className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2"
+                    >
+                      <FaMoneyBillWave /> Add Funds
+                    </button>
+                    <button
+                      onClick={() => openFundModal('deduct')}
+                      className="flex-1 bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2"
+                    >
+                      <FaMoneyBillWave /> Deduct Funds
+                    </button>
+                  </div>
                 </div>
 
                 {/* Gaming Stats */}
@@ -563,6 +622,83 @@ const Users = () => {
                 {actionLoading ? <FaSpinner className="animate-spin" /> : <FaTrash />}
                 Delete Permanently
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Fund Management Modal */}
+      {showFundModal && (
+        <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setShowFundModal(false)}>
+          <div className="bg-gray-800 rounded-2xl w-full max-w-md border border-gray-700 p-6" onClick={e => e.stopPropagation()}>
+            <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+              <FaMoneyBillWave className={fundAction === 'add' ? 'text-green-400' : 'text-red-400'} />
+              {fundAction === 'add' ? 'Add Funds' : 'Deduct Funds'}
+            </h3>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-gray-400 text-sm mb-2">Amount (₹)</label>
+                <input
+                  type="number"
+                  value={fundAmount}
+                  onChange={(e) => setFundAmount(e.target.value)}
+                  placeholder="Enter amount"
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500"
+                  min="1"
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-400 text-sm mb-2">Cash Type</label>
+                <select
+                  value={fundType}
+                  onChange={(e) => setFundType(e.target.value)}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500"
+                >
+                  <option value="deposit">Deposit Cash</option>
+                  <option value="winning">Winning Cash</option>
+                  <option value="bonus">Bonus Cash</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-gray-400 text-sm mb-2">Reason (Optional)</label>
+                <textarea
+                  value={fundReason}
+                  onChange={(e) => setFundReason(e.target.value)}
+                  placeholder="Enter reason for this transaction"
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500 resize-none"
+                  rows="3"
+                />
+              </div>
+
+              <div className={`p-4 rounded-lg border ${fundAction === 'add' ? 'bg-green-500/10 border-green-500/30' : 'bg-red-500/10 border-red-500/30'}`}>
+                <p className={`text-sm font-semibold ${fundAction === 'add' ? 'text-green-400' : 'text-red-400'}`}>
+                  {fundAction === 'add' ? '✓' : '⚠️'} {fundAmount ? `₹${fundAmount}` : '₹0'} will be {fundAction === 'add' ? 'added to' : 'deducted from'} {fundType} cash
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowFundModal(false)}
+                  className="flex-1 bg-gray-700 text-white py-3 rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleFundManagement}
+                  disabled={fundLoading || !fundAmount}
+                  className={`flex-1 py-3 rounded-lg font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2 ${
+                    fundAction === 'add'
+                      ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white'
+                      : 'bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white'
+                  }`}
+                >
+                  {fundLoading ? <FaSpinner className="animate-spin" /> : null}
+                  {fundAction === 'add' ? 'Add Funds' : 'Deduct Funds'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

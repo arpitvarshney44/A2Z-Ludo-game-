@@ -128,6 +128,9 @@ export const getKYCStatus = async (req, res) => {
     res.status(200).json({
       status: user.kycDetails.status,
       isVerified: user.isKYCVerified,
+      fullName: user.kycDetails.fullName,
+      documentType: user.kycDetails.documentType,
+      documentNumber: user.kycDetails.documentNumber,
       submittedAt: user.kycDetails.submittedAt,
       verifiedAt: user.kycDetails.verifiedAt,
       rejectionReason: user.kycDetails.rejectionReason

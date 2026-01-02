@@ -60,6 +60,7 @@ export const userAPI = {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
   getStats: () => api.get('/user/stats'),
+  applyReferralCode: (referralCode) => api.post('/user/apply-referral', { referralCode }),
 };
 
 // Wallet APIs
@@ -73,12 +74,15 @@ export const walletAPI = {
 
 // Game APIs
 export const gameAPI = {
-  createGame: (gameType, entryFee, maxPlayers) => 
-    api.post('/game/create', { gameType, entryFee, maxPlayers }),
+  createGame: (data) => api.post('/game/create', data),
   joinGame: (roomCode) => api.post(`/game/join/${roomCode}`),
   getAvailableGames: () => api.get('/game/available'),
-  getGameByRoomCode: (roomCode) => api.get(`/game/${roomCode}`),
-  getGameHistory: (page, limit) => api.get(`/game/history?page=${page}&limit=${limit}`),
+  getGameDetails: (roomCode) => api.get(`/game/${roomCode}`),
+  getMyGames: () => api.get('/game/my-games'),
+  uploadWinScreenshot: (formData) => api.post('/game/upload-screenshot', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  cancelGame: (roomCode) => api.delete(`/game/cancel/${roomCode}`)
 };
 
 // Referral APIs

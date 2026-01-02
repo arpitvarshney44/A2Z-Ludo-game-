@@ -13,6 +13,7 @@ import Refer from './pages/Refer';
 import Support from './pages/Support';
 import Profile from './pages/Profile';
 import GameLobby from './pages/GameLobby';
+import BattleRoom from './pages/BattleRoom';
 import Transactions from './pages/Transactions';
 import KYC from './pages/KYC';
 import PrivacyPolicy from './pages/PrivacyPolicy';
@@ -68,6 +69,7 @@ function App() {
           <Route path="/support" element={isAuthenticated ? <Support /> : <Navigate to="/login" />} />
           <Route path="/profile" element={isAuthenticated ? <Profile /> : <Navigate to="/login" />} />
           <Route path="/game-lobby" element={isAuthenticated ? <GameLobby /> : <Navigate to="/login" />} />
+          <Route path="/battle/:roomCode" element={isAuthenticated ? <BattleRoom /> : <Navigate to="/login" />} />
           <Route path="/transactions" element={isAuthenticated ? <Transactions /> : <Navigate to="/login" />} />
           <Route path="/kyc" element={isAuthenticated ? <KYC /> : <Navigate to="/login" />} />
           <Route path="/privacy-policy" element={isAuthenticated ? <PrivacyPolicy /> : <Navigate to="/login" />} />

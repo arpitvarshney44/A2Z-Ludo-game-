@@ -84,11 +84,13 @@ export const register = async (req, res) => {
         username: user.username,
         avatar: user.avatar,
         referralCode: user.referralCode,
+        referredBy: user.referredBy,
         depositCash: user.depositCash,
         winningCash: user.winningCash,
         bonusCash: user.bonusCash,
         totalBalance: user.getTotalBalance(),
-        isKYCVerified: user.isKYCVerified
+        isKYCVerified: user.isKYCVerified,
+        kycDetails: user.kycDetails
       }
     });
   } catch (error) {
@@ -146,11 +148,13 @@ export const login = async (req, res) => {
         username: user.username,
         avatar: user.avatar,
         referralCode: user.referralCode,
+        referredBy: user.referredBy,
         depositCash: user.depositCash,
         winningCash: user.winningCash,
         bonusCash: user.bonusCash,
         totalBalance: user.getTotalBalance(),
-        isKYCVerified: user.isKYCVerified
+        isKYCVerified: user.isKYCVerified,
+        kycDetails: user.kycDetails
       }
     });
   } catch (error) {
@@ -174,6 +178,7 @@ export const getMe = async (req, res) => {
         username: user.username,
         avatar: user.avatar,
         referralCode: user.referralCode,
+        referredBy: user.referredBy,
         depositCash: user.depositCash,
         winningCash: user.winningCash,
         bonusCash: user.bonusCash,
@@ -187,6 +192,7 @@ export const getMe = async (req, res) => {
         referredUsers: user.referredUsers.length,
         isKYCVerified: user.isKYCVerified,
         kycStatus: user.kycDetails?.status || 'not_submitted',
+        kycDetails: user.kycDetails,
         createdAt: user.createdAt
       }
     });

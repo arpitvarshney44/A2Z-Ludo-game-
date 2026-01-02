@@ -14,7 +14,10 @@ const GameLobby = () => {
   const [openBattles, setOpenBattles] = useState([]);
   const [runningBattles, setRunningBattles] = useState([]);
   const [showRules, setShowRules] = useState(false);
-  const [showComingSoon, setShowComingSoon] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showJoinModal, setShowJoinModal] = useState(false);
+  const [selectedBattle, setSelectedBattle] = useState(null);
+  const [roomCode, setRoomCode] = useState('');
   const [commissionRate, setCommissionRate] = useState(5);
 
   useEffect(() => {
@@ -54,87 +57,179 @@ const GameLobby = () => {
       return;
     }
 
-    // Show coming soon popup instead of creating battle
-    setShowComingSoon(true);
+    // Show create modal for room code
+    setShowCreateModal(true);
   };
 
-  const handleJoinBattle = async (roomCode) => {
-    // Show coming soon popup instead of joining battle
-    setShowComingSoon(true);
+  const confirmCreateBattle = async () => {
+    if (!roomCode.trim()) {
+      toast.error('Please enter a room code');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await gameAPI.createGame({
+        entryFee: parseFloat(entryAmount),
+        roomCode: roomCode.trim().toUpperCase()
+      });
+      
+      toast.success('Battle created successfully!');
+      setShowCreateModal(false);
+      setRoomCode('');
+      setEntryAmount('');
+      fetchBattles();
+      
+      // Navigate to battle room
+      navigate(`/battle/${response.data.game.roomCode}`);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to create battle');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleJoinBattle = async (battle) => {
+    const totalBalance = (user?.depositCash || 0) + (user?.winningCash || 0) + (user?.bonusCash || 0);
+
+    if (totalBalance < battle.entryFee) {
+      toast.error(`Insufficient balance! You need ₹${battle.entryFee}`);
+      return;
+    }
+
+    setSelectedBattle(battle);
+    setShowJoinModal(true);
+  };
+
+  const confirmJoinBattle = async () => {
+    if (!selectedBattle) return;
+
+    setLoading(true);
+    try {
+      await gameAPI.joinGame(selectedBattle.roomCode);
+      
+      toast.success('Joined battle successfully!');
+      setShowJoinModal(false);
+      fetchBattles();
+      
+      // Navigate to battle room
+      navigate(`/battle/${selectedBattle.roomCode}`);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to join battle');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-[#e8f5d0] p-4 pb-24">
-      {/* Coming Soon Modal */}
-      {showComingSoon && (
+      {/* Create Battle Modal */}
+      {showCreateModal && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <motion.div
-            initial={{ scale: 0.8, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            className="bg-gradient-to-br from-purple-900 via-pink-900 to-orange-900 rounded-3xl p-8 max-w-md w-full border-4 border-yellow-400 shadow-2xl relative overflow-hidden"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl"
           >
-            {/* Animated Background */}
-            <div className="absolute inset-0 opacity-20">
-              <div className="absolute top-10 left-10 w-32 h-32 bg-yellow-400 rounded-full filter blur-3xl animate-pulse"></div>
-              <div className="absolute bottom-10 right-10 w-32 h-32 bg-pink-400 rounded-full filter blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+            <h2 className="text-2xl font-black text-gray-800 mb-4 flex items-center gap-2">
+              <span className="text-3xl">🎮</span>
+              Create Battle
+            </h2>
+            
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl p-4 mb-4">
+              <p className="text-gray-700 text-sm mb-2">
+                <span className="font-bold">Entry Amount:</span> ₹{entryAmount}
+              </p>
+              <p className="text-gray-700 text-sm">
+                <span className="font-bold">Prize Pool:</span> ₹{(parseFloat(entryAmount) * 2 * ((100 - commissionRate) / 100)).toFixed(2)}
+              </p>
             </div>
 
-            <div className="relative z-10 text-center">
-              <motion.div
-                animate={{ 
-                  rotate: [0, 10, -10, 10, 0],
-                  scale: [1, 1.1, 1, 1.1, 1]
-                }}
-                transition={{ 
-                  duration: 2,
-                  repeat: Infinity,
-                  repeatDelay: 1
-                }}
-                className="text-8xl mb-6"
-              >
-                🎲
-              </motion.div>
-
-              <h2 className="text-4xl font-black text-white mb-4 drop-shadow-lg">
-                Coming Soon!
-              </h2>
-              
-              <p className="text-yellow-300 text-lg font-bold mb-6 leading-relaxed">
-                Ludo game is under development. Get ready for an amazing gaming experience!
+            <div className="mb-4">
+              <label className="block text-gray-700 mb-2 font-semibold">Enter Room Code</label>
+              <input
+                type="text"
+                value={roomCode}
+                onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+                placeholder="e.g., LUDO123"
+                className="w-full bg-gray-50 border-2 border-gray-300 px-4 py-3 rounded-xl text-gray-800 font-bold outline-none focus:border-blue-500 transition-all"
+                maxLength={10}
+              />
+              <p className="text-gray-500 text-xs mt-2">
+                💡 Create a unique room code for your battle
               </p>
+            </div>
 
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 mb-6 border border-white/20">
-                <p className="text-white text-sm font-semibold mb-2">🚀 What's Coming:</p>
-                <ul className="text-left text-white/90 text-sm space-y-2">
-                  <li className="flex items-center gap-2">
-                    <span className="text-green-400">✓</span>
-                    <span>Smooth gameplay experience</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-green-400">✓</span>
-                    <span>Real-time multiplayer battles</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-green-400">✓</span>
-                    <span>Fair play & instant rewards</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-green-400">✓</span>
-                    <span>Exciting tournaments</span>
-                  </li>
-                </ul>
-              </div>
-
+            <div className="flex gap-3">
               <button
-                onClick={() => setShowComingSoon(false)}
-                className="w-full bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-white font-black text-lg py-4 rounded-xl hover:scale-105 transition-all shadow-2xl"
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setRoomCode('');
+                }}
+                className="flex-1 bg-gray-200 text-gray-800 py-3 rounded-xl font-bold hover:bg-gray-300 transition-all"
               >
-                Got It! 🎮
+                Cancel
               </button>
+              <button
+                onClick={confirmCreateBattle}
+                disabled={loading || !roomCode.trim()}
+                className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 rounded-xl font-bold hover:scale-105 transition-all disabled:opacity-50 shadow-lg"
+              >
+                {loading ? 'Creating...' : 'Create Battle'}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
 
-              <p className="text-white/60 text-xs mt-4">
-                Stay tuned for updates!
+      {/* Join Battle Modal */}
+      {showJoinModal && selectedBattle && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl"
+          >
+            <h2 className="text-2xl font-black text-gray-800 mb-4 flex items-center gap-2">
+              <span className="text-3xl">⚔️</span>
+              Join Battle
+            </h2>
+            
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-xl p-4 mb-4">
+              <p className="text-gray-700 text-sm mb-2">
+                <span className="font-bold">Room Code:</span> {selectedBattle.roomCode}
               </p>
+              <p className="text-gray-700 text-sm mb-2">
+                <span className="font-bold">Entry Fee:</span> ₹{selectedBattle.entryFee}
+              </p>
+              <p className="text-gray-700 text-sm">
+                <span className="font-bold">Prize Pool:</span> ₹{selectedBattle.prizePool}
+              </p>
+            </div>
+
+            <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-4 mb-4">
+              <p className="text-yellow-800 text-sm font-semibold">
+                ⚠️ ₹{selectedBattle.entryFee} will be deducted from your wallet
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowJoinModal(false);
+                  setSelectedBattle(null);
+                }}
+                className="flex-1 bg-gray-200 text-gray-800 py-3 rounded-xl font-bold hover:bg-gray-300 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmJoinBattle}
+                disabled={loading}
+                className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 rounded-xl font-bold hover:scale-105 transition-all disabled:opacity-50 shadow-lg"
+              >
+                {loading ? 'Joining...' : 'Join Now'}
+              </button>
             </div>
           </motion.div>
         </div>
@@ -169,19 +264,23 @@ const GameLobby = () => {
                 <ul className="space-y-2 text-sm">
                   <li className="flex gap-2">
                     <span className="text-blue-600">•</span>
-                    <span>Create or join a battle with your desired entry amount</span>
+                    <span>Create a battle by entering amount and room code</span>
                   </li>
                   <li className="flex gap-2">
                     <span className="text-blue-600">•</span>
-                    <span>Wait for 2 players to join the battle</span>
+                    <span>Share the room code with your opponent or join an open battle</span>
                   </li>
                   <li className="flex gap-2">
                     <span className="text-blue-600">•</span>
-                    <span>Roll the dice and move your tokens strategically</span>
+                    <span>Both players use the room code to play on Ludo King or any Ludo app</span>
                   </li>
                   <li className="flex gap-2">
                     <span className="text-blue-600">•</span>
-                    <span>First player to get all 4 tokens home wins!</span>
+                    <span>After winning, upload a screenshot as proof</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="text-blue-600">•</span>
+                    <span>Admin verifies and credits the winner</span>
                   </li>
                 </ul>
               </div>
@@ -201,7 +300,11 @@ const GameLobby = () => {
                   </li>
                   <li className="flex gap-2">
                     <span className="text-green-600">•</span>
-                    <span>Instant withdrawal to your wallet</span>
+                    <span>Upload clear win screenshot for verification</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="text-green-600">•</span>
+                    <span>Instant credit to winning wallet after admin approval</span>
                   </li>
                 </ul>
               </div>
@@ -217,31 +320,63 @@ const GameLobby = () => {
                   </li>
                   <li className="flex gap-2">
                     <span className="text-yellow-600">•</span>
-                    <span>You must have sufficient balance to join</span>
+                    <span>Entry fee is deducted immediately when creating/joining</span>
                   </li>
                   <li className="flex gap-2">
                     <span className="text-yellow-600">•</span>
-                    <span>No refunds once the game starts</span>
+                    <span>Both players must upload win screenshot</span>
                   </li>
                   <li className="flex gap-2">
                     <span className="text-yellow-600">•</span>
-                    <span>Fair play is mandatory - cheating leads to ban</span>
+                    <span>Admin decision is final in case of disputes</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="text-yellow-600">•</span>
+                    <span>Fake screenshots lead to permanent ban</span>
                   </li>
                 </ul>
               </div>
 
               <div className="bg-purple-50 border-2 border-purple-300 rounded-xl p-4">
                 <h3 className="text-purple-600 font-bold text-lg mb-2 flex items-center gap-2">
-                  🎁 Referral Bonus
+                  📱 How to Use Room Code
                 </h3>
                 <ul className="space-y-2 text-sm">
                   <li className="flex gap-2">
                     <span className="text-purple-600">•</span>
-                    <span>Earn 3% commission on every friend's game</span>
+                    <span>Open Ludo King or any Ludo app on your phone</span>
                   </li>
                   <li className="flex gap-2">
                     <span className="text-purple-600">•</span>
+                    <span>Create a private room with the same room code</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="text-purple-600">•</span>
+                    <span>Both players join using the room code</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="text-purple-600">•</span>
+                    <span>Play the game and take screenshot of result</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="bg-orange-50 border-2 border-orange-300 rounded-xl p-4">
+                <h3 className="text-orange-600 font-bold text-lg mb-2 flex items-center gap-2">
+                  🎁 Referral Bonus
+                </h3>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex gap-2">
+                    <span className="text-orange-600">•</span>
+                    <span>Earn 3% commission on every friend's game</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="text-orange-600">•</span>
                     <span>Share your referral code and start earning</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="text-orange-600">•</span>
+                    <span>Unlimited referral earnings</span>
                   </li>
                 </ul>
               </div>
@@ -364,11 +499,11 @@ const GameLobby = () => {
           ) : (
             openBattles.map((battle, index) => {
               // Check if current user has already joined this battle
-              const hasJoined = battle.players?.some(p => p.user === user?.id);
+              const hasJoined = battle.players?.some(p => p.user._id === user?.id || p.user === user?.id);
               
               return (
               <motion.div
-                key={battle.id}
+                key={battle._id || battle.id}
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: index * 0.05 }}
@@ -391,15 +526,23 @@ const GameLobby = () => {
                       ₹{battle.entryFee}
                     </span>
                     {hasJoined ? (
-                      <button
-                        onClick={() => navigate(`/game/${battle.roomCode}`)}
-                        className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-2 rounded-xl font-bold hover:scale-105 transition-all shadow-lg"
-                      >
-                        Joined ✓
-                      </button>
+                      <div className="flex gap-1">
+                        <button
+                          disabled
+                          className="bg-gray-600 text-white px-2 py-1 rounded-lg font-semibold text-xs cursor-not-allowed opacity-70 shadow-lg flex items-center gap-1"
+                        >
+                          Joined ✓
+                        </button>
+                        <button
+                          onClick={() => navigate(`/battle/${battle.roomCode}`)}
+                          className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-2 py-1 rounded-lg font-semibold text-xs hover:scale-105 transition-all shadow-lg"
+                        >
+                          View
+                        </button>
+                      </div>
                     ) : (
                       <button
-                        onClick={() => handleJoinBattle(battle.roomCode)}
+                        onClick={() => handleJoinBattle(battle)}
                         className="bg-gradient-to-r from-green-500 to-teal-500 text-white px-6 py-2 rounded-xl font-bold hover:scale-105 transition-all shadow-lg"
                       >
                         Join
@@ -434,9 +577,12 @@ const GameLobby = () => {
               <p className="text-gray-500 text-sm mt-2">Games will appear here once started</p>
             </div>
           ) : (
-            runningBattles.map((battle, index) => (
+            runningBattles.map((battle, index) => {
+              const isMyBattle = battle.players?.some(p => p.user._id === user?.id || p.user === user?.id);
+              
+              return (
               <motion.div
-                key={battle.id}
+                key={battle._id || battle.id}
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: index * 0.05 }}
@@ -451,7 +597,7 @@ const GameLobby = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-4">
                   <div>
                     <p className="text-gray-400 text-sm mb-1">Entry Fee</p>
                     <p className="text-green-400 font-black text-2xl">₹{battle.entryFee}</p>
@@ -465,11 +611,21 @@ const GameLobby = () => {
                   </div>
                 </div>
 
-                <div className="mt-4 bg-orange-500/20 border border-orange-500 rounded-xl p-2 text-center">
-                  <p className="text-orange-400 font-bold text-sm">🔴 LIVE</p>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-orange-500/20 border border-orange-500 rounded-xl p-2 text-center">
+                    <p className="text-orange-400 font-bold text-sm">🔴 LIVE</p>
+                  </div>
+                  {isMyBattle && (
+                    <button
+                      onClick={() => navigate(`/battle/${battle.roomCode}`)}
+                      className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-4 py-2 rounded-xl font-bold hover:scale-105 transition-all shadow-lg"
+                    >
+                      View Battle
+                    </button>
+                  )}
                 </div>
               </motion.div>
-            ))
+            )})
           )}
         </div>
       </motion.div>

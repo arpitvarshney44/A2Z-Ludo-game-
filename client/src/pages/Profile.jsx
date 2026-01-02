@@ -25,14 +25,41 @@ const Profile = () => {
     navigate('/login');
   };
 
-  const handleSubmitReferCode = () => {
+  const handleSubmitReferCode = async () => {
     if (!referCode.trim()) {
       toast.error('Please enter a refer code');
       return;
     }
-    // Handle refer code submission
-    toast.success('Refer code submitted!');
-    setReferCode('');
+
+    if (user?.referredBy) {
+      toast.error('You have already applied a referral code');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await axios.post(
+        '/user/apply-referral',
+        { referralCode: referCode },
+        {
+          baseURL: import.meta.env.VITE_API_URL,
+          headers: {
+            Authorization: `Bearer ${JSON.parse(localStorage.getItem('auth-storage')).state.token}`
+          }
+        }
+      );
+
+      updateUser({ 
+        referredBy: referCode.toUpperCase(),
+        bonusCash: response.data.user.bonusCash
+      });
+      toast.success(response.data.message);
+      setReferCode('');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to apply referral code');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleUpdateUsername = async () => {
@@ -321,29 +348,41 @@ const Profile = () => {
         </motion.div>
       </Link>
 
-      {/* Use Refer Code */}
+      {/* Referral Code Section */}
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.25 }}
         className="mb-6"
       >
-        <h3 className="text-gray-800 font-bold text-xl mb-4">Use Refer Code</h3>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={referCode}
-            onChange={(e) => setReferCode(e.target.value.toUpperCase())}
-            placeholder="Enter Refer Code"
-            className="flex-1 bg-white border-2 border-gray-300 rounded-2xl px-4 py-3 text-gray-800 font-semibold outline-none focus:border-blue-500 transition-all"
-          />
-          <button
-            onClick={handleSubmitReferCode}
-            className="bg-green-100 border-2 border-green-300 w-14 h-14 rounded-2xl flex items-center justify-center hover:scale-105 transition-all flex-shrink-0"
-          >
-            <FaCheckCircle className="text-green-600 text-2xl" />
-          </button>
-        </div>
+        <h3 className="text-gray-800 font-bold text-xl mb-4">
+          {user?.referredBy ? 'Applied Referral Code' : 'Use Refer Code'}
+        </h3>
+        {user?.referredBy ? (
+          <div className="bg-gradient-to-r from-green-50 to-green-100 border-2 border-green-300 rounded-2xl px-4 py-4 flex items-center gap-3">
+            <FaCheckCircle className="text-green-600 text-2xl flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-gray-600 text-sm font-medium">Referral Code Applied</p>
+              <p className="text-gray-800 font-bold text-xl">{user.referredBy}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={referCode}
+              onChange={(e) => setReferCode(e.target.value.toUpperCase())}
+              placeholder="Enter Refer Code"
+              className="flex-1 bg-white border-2 border-gray-300 rounded-2xl px-4 py-3 text-gray-800 font-semibold outline-none focus:border-blue-500 transition-all"
+            />
+            <button
+              onClick={handleSubmitReferCode}
+              className="bg-green-100 border-2 border-green-300 w-14 h-14 rounded-2xl flex items-center justify-center hover:scale-105 transition-all flex-shrink-0"
+            >
+              <FaCheckCircle className="text-green-600 text-2xl" />
+            </button>
+          </div>
+        )}
       </motion.div>
 
       {/* Other Details */}

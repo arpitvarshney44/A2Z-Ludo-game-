@@ -106,6 +106,41 @@ const Wallet = () => {
         </div>
       </motion.div>
 
+      {/* Bonus Cash Card */}
+      <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        className="bg-white rounded-3xl shadow-lg mb-4 overflow-hidden border-l-8 border-purple-400"
+      >
+        <div className="flex">
+          {/* Left side - Illustration */}
+          <div className="w-2/5 bg-gray-50 flex items-center justify-center p-6">
+            <img 
+              src="/indian-rupee-money-bag.png" 
+              alt="Bonus" 
+              className="w-full h-auto object-contain max-w-[150px]"
+            />
+          </div>
+
+          {/* Right side - Content */}
+          <div className="flex-1 p-6 flex flex-col justify-center">
+            <div className="bg-gradient-to-r from-yellow-300 to-yellow-400 rounded-2xl px-6 py-3 mb-4 inline-block">
+              <h2 className="text-xl font-black text-gray-800">Bonus Cash</h2>
+            </div>
+            
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-blue-500 text-2xl">₹</span>
+              <span className="text-4xl font-black text-purple-500">{user?.bonusCash?.toFixed(0) || 0}</span>
+            </div>
+
+            <p className="text-gray-600 text-sm font-semibold">
+              💡 Use bonus cash to play games
+            </p>
+          </div>
+        </div>
+      </motion.div>
+
       {/* Transaction History Link */}
       <Link
         to="/transactions"

@@ -14,6 +14,7 @@ import supportRoutes from './routes/supportRoutes.js';
 import kycRoutes from './routes/kycRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import configRoutes from './routes/configRoutes.js';
+import gameRoutes from './routes/gameRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { getPublicPolicy } from './controllers/adminController.js';
 import { initializeDefaultConfigs } from './controllers/configController.js';
@@ -82,6 +83,7 @@ app.use('/api/support', supportRoutes);
 app.use('/api/kyc', kycRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/config', configRoutes);
+app.use('/api/game', gameRoutes);
 
 // Public policy route
 app.get('/api/policies/:policyKey', getPublicPolicy);

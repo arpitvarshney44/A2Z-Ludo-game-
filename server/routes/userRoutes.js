@@ -1,5 +1,5 @@
 import express from 'express';
-import { updateProfile, uploadAvatar, getUserStats } from '../controllers/userController.js';
+import { updateProfile, uploadAvatar, getUserStats, applyReferralCode } from '../controllers/userController.js';
 import { protect } from '../middleware/auth.js';
 import multer from 'multer';
 import path from 'path';
@@ -50,5 +50,6 @@ const handleMulterError = (err, req, res, next) => {
 router.put('/profile', protect, updateProfile);
 router.post('/avatar', protect, upload.single('avatar'), handleMulterError, uploadAvatar);
 router.get('/stats', protect, getUserStats);
+router.post('/apply-referral', protect, applyReferralCode);
 
 export default router;
