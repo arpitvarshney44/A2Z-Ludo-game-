@@ -499,7 +499,7 @@ const GameLobby = () => {
           ) : (
             openBattles.map((battle, index) => {
               // Check if current user has already joined this battle
-              const hasJoined = battle.players?.some(p => p.user._id === user?.id || p.user === user?.id);
+              const hasJoined = battle.players?.some(p => p && p.user && (p.user._id === user?.id || p.user === user?.id));
               
               return (
               <motion.div
@@ -578,7 +578,7 @@ const GameLobby = () => {
             </div>
           ) : (
             runningBattles.map((battle, index) => {
-              const isMyBattle = battle.players?.some(p => p.user._id === user?.id || p.user === user?.id);
+              const isMyBattle = battle.players?.some(p => p && p.user && (p.user._id === user?.id || p.user === user?.id));
               
               return (
               <motion.div
