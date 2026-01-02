@@ -141,35 +141,7 @@ const Deposit = () => {
           </motion.div>
         )}
 
-        {/* Instructions */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="bg-gradient-to-br from-blue-600 to-purple-600 rounded-3xl p-6 mb-6 border-2 border-blue-400 shadow-2xl"
-        >
-          <h2 className="text-2xl font-black text-white mb-4 flex items-center gap-2">
-            <FaCheckCircle /> How to Deposit
-          </h2>
-          <ol className="space-y-3 text-white">
-            <li className="flex items-start gap-3">
-              <span className="bg-white/20 rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">1</span>
-              <span>Scan the QR code or use the UPI ID below to make payment</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="bg-white/20 rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">2</span>
-              <span>Take a screenshot of the payment confirmation</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="bg-white/20 rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">3</span>
-              <span>Upload the screenshot and submit the form</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="bg-white/20 rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">4</span>
-              <span>Wait for admin approval (usually within 5-10 minutes)</span>
-            </li>
-          </ol>
-        </motion.div>
-
+       
         {/* Payment Details */}
         <motion.div
           initial={{ y: 20, opacity: 0 }}
@@ -192,7 +164,7 @@ const Deposit = () => {
           <div className="space-y-4">
             {paymentSettings.upiId && (
               <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-2 border-green-500/50 rounded-2xl p-4">
-                <p className="text-gray-400 text-sm mb-2 font-semibold">UPI ID</p>
+                <p className="text-gray-400 text-sm mb-2 font-semibold">UPIID</p>
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-white font-mono text-lg font-bold break-all">{paymentSettings.upiId}</p>
                   <button

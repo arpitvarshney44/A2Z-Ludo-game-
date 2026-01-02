@@ -57,18 +57,18 @@ const Refer = () => {
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="bg-gradient-to-br from-cyan-300 to-blue-300 rounded-3xl p-8 mb-6 text-center shadow-lg"
+        className="bg-gradient-to-br from-cyan-300 to-blue-300 rounded-2xl p-5 mb-4 text-center shadow-md"
       >
-        <div className="mb-4">
+        <div className="mb-3">
           <img 
             src="/refer.png" 
             alt="Refer Friends" 
-            className="w-32 h-32 mx-auto object-contain"
+            className="w-24 h-24 mx-auto object-contain"
           />
         </div>
-        <h1 className="text-4xl font-black text-gray-600 mb-3">Refer</h1>
-        <p className="text-gray-800 text-lg font-semibold">
-          You can earn more more real money<br />doing refer to your friends
+        <h1 className="text-3xl font-black text-gray-600 mb-2">Refer</h1>
+        <p className="text-gray-800 text-base font-semibold">
+          You can earn more real money<br />doing refer to your friends
         </p>
       </motion.div>
 
@@ -77,16 +77,16 @@ const Refer = () => {
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.1 }}
-        className="bg-white rounded-3xl p-6 mb-4 shadow-lg"
+        className="bg-white rounded-2xl p-4 mb-3 shadow-md"
       >
-        <h2 className="text-gray-800 font-bold text-xl mb-4">Referral Code</h2>
-        <div className="flex gap-2 items-center bg-gray-100 border-2 border-gray-300 rounded-2xl px-4 py-4">
-          <span className="flex-1 text-gray-800 font-bold text-2xl">
+        <h2 className="text-gray-800 font-bold text-base mb-3">Referral Code</h2>
+        <div className="flex gap-2 items-center bg-gray-100 border-2 border-gray-300 rounded-xl px-3 py-3">
+          <span className="flex-1 text-gray-800 font-bold text-xl">
             {user?.referralCode || ''}
           </span>
           <button
             onClick={handleCopyCode}
-            className="bg-black text-white font-bold px-6 py-3 rounded-xl hover:scale-105 transition-all flex-shrink-0 text-sm"
+            className="bg-black text-white font-bold px-5 py-2.5 rounded-lg hover:scale-105 transition-all flex-shrink-0 text-sm"
           >
             Copy
           </button>
@@ -101,34 +101,34 @@ const Refer = () => {
       >
         <button
           onClick={handleShareWhatsApp}
-          className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white font-bold text-xl py-4 rounded-2xl flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-lg mb-6"
+          className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white font-bold text-base py-3 rounded-xl flex items-center justify-center gap-2 hover:scale-105 transition-all shadow-md mb-4"
         >
-          <FaWhatsapp className="text-3xl" />
+          <FaWhatsapp className="text-2xl" />
           Whatsapp
         </button>
       </motion.div>
 
       {/* Your Referral Earnings */}
-      <div className="mb-4">
-        <h2 className="text-gray-800 font-bold text-xl mb-4">Your Referral Earnings</h2>
+      <div className="mb-3">
+        <h2 className="text-gray-800 font-bold text-base mb-3">Your Referral Earnings</h2>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-2 gap-3 mb-4">
         {/* Referred Players Card */}
         <motion.div
           initial={{ x: -20, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="bg-gradient-to-br from-pink-100 to-pink-50 rounded-3xl p-6 shadow-lg relative overflow-hidden"
+          className="bg-gradient-to-br from-pink-100 to-pink-50 rounded-2xl p-4 shadow-md relative overflow-hidden"
         >
-          <h3 className="text-gray-800 font-bold text-lg mb-2">Referred Players</h3>
-          <p className="text-5xl font-black text-gray-800 mb-4">{referredUsers.length}</p>
-          <div className="absolute bottom-2 right-2">
+          <h3 className="text-gray-800 font-bold text-sm mb-1.5">Referred Players</h3>
+          <p className="text-4xl font-black text-gray-800 mb-2">{referredUsers.length}</p>
+          <div className="absolute bottom-1 right-1">
             <img 
               src="/trophy.png" 
               alt="Trophy" 
-              className="w-20 h-20 object-contain opacity-80"
+              className="w-16 h-16 object-contain opacity-80"
             />
           </div>
         </motion.div>
@@ -138,15 +138,15 @@ const Refer = () => {
           initial={{ x: 20, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="bg-gradient-to-br from-blue-100 to-blue-50 rounded-3xl p-6 shadow-lg relative overflow-hidden"
+          className="bg-gradient-to-br from-blue-100 to-blue-50 rounded-2xl p-4 shadow-md relative overflow-hidden"
         >
-          <h3 className="text-gray-800 font-bold text-lg mb-2">Referral Earning</h3>
-          <p className="text-5xl font-black text-gray-800 mb-4">₹{user?.referralEarnings || 0}</p>
-          <div className="absolute bottom-2 right-2">
+          <h3 className="text-gray-800 font-bold text-sm mb-1.5">Referral Earning</h3>
+          <p className="text-4xl font-black text-gray-800 mb-2">₹{user?.referralEarnings || 0}</p>
+          <div className="absolute bottom-1 right-1">
             <img 
               src="/indian-rupee-money-bag.png" 
               alt="Money Bag" 
-              className="w-20 h-20 object-contain opacity-80"
+              className="w-16 h-16 object-contain opacity-80"
             />
           </div>
         </motion.div>
@@ -158,34 +158,34 @@ const Refer = () => {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="mb-6"
+          className="mb-4"
         >
-          <h2 className="text-gray-800 font-bold text-xl mb-4">Your Referrals</h2>
-          <div className="space-y-3">
+          <h2 className="text-gray-800 font-bold text-base mb-3">Your Referrals</h2>
+          <div className="space-y-2">
             {referredUsers.map((referredUser, index) => (
               <motion.div
                 key={referredUser.id}
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.4 + (index * 0.05) }}
-                className="bg-white rounded-2xl p-4 shadow-lg flex items-center gap-4"
+                className="bg-white rounded-xl p-3 shadow-md flex items-center gap-3"
               >
                 <img
                   src={referredUser.avatar || 'https://via.placeholder.com/50'}
                   alt={referredUser.username}
-                  className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
+                  className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
                 />
                 <div className="flex-1">
-                  <p className="text-gray-800 font-bold text-lg">
+                  <p className="text-gray-800 font-bold text-base">
                     {referredUser.username || 'User'}
                   </p>
-                  <p className="text-gray-600 text-sm">
+                  <p className="text-gray-600 text-xs">
                     {referredUser.phoneNumber}
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="text-gray-600 text-xs">Games Played</p>
-                  <p className="text-gray-800 font-bold text-lg">
+                  <p className="text-gray-800 font-bold text-base">
                     {referredUser.totalGamesPlayed || 0}
                   </p>
                 </div>
@@ -200,11 +200,11 @@ const Refer = () => {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="bg-white rounded-3xl p-8 text-center shadow-lg"
+          className="bg-white rounded-2xl p-6 text-center shadow-md"
         >
-          <div className="text-6xl mb-4">👥</div>
-          <h3 className="text-gray-800 font-bold text-xl mb-2">No Referrals Yet</h3>
-          <p className="text-gray-600">
+          <div className="text-5xl mb-3">👥</div>
+          <h3 className="text-gray-800 font-bold text-lg mb-2">No Referrals Yet</h3>
+          <p className="text-gray-600 text-sm">
             Share your referral code with friends to start earning!
           </p>
         </motion.div>

@@ -197,9 +197,6 @@ const GameLobby = () => {
             
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-xl p-4 mb-4">
               <p className="text-gray-700 text-sm mb-2">
-                <span className="font-bold">Room Code:</span> {selectedBattle.roomCode}
-              </p>
-              <p className="text-gray-700 text-sm mb-2">
                 <span className="font-bold">Entry Fee:</span> ₹{selectedBattle.entryFee}
               </p>
               <p className="text-gray-700 text-sm">
@@ -509,14 +506,26 @@ const GameLobby = () => {
                 transition={{ delay: index * 0.05 }}
                 className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-5 shadow-xl border-2 border-green-500/30 hover:border-green-500 transition-all"
               >
+                {/* Creator Name Header */}
+                <div className="mb-3 pb-2 border-b border-gray-700">
+                  <p className="text-gray-400 text-xs">Challenge From</p>
+                  <p className="text-white font-bold text-base">
+                    {battle.players && battle.players[0] && battle.players[0].user 
+                      ? (battle.players[0].user.username || 'Player')
+                      : 'Player'}
+                  </p>
+                </div>
+
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4 flex-1">
                     <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-black text-lg shadow-lg">
-                      {battle.roomCode.substring(0, 2)}
+                      🎮
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-green-400 font-bold text-sm mb-1">Challenge</p>
-                      <p className="text-white font-black text-lg truncate">{battle.roomCode}</p>
+                      <p className="text-green-400 font-bold text-sm mb-1">Room Code</p>
+                      <p className="text-white font-black text-lg truncate">
+                        {hasJoined ? battle.roomCode : '******'}
+                      </p>
                       <p className="text-gray-400 text-xs">{battle.currentPlayers}/{battle.maxPlayers} Players</p>
                     </div>
                   </div>

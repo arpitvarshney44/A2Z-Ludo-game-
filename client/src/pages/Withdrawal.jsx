@@ -311,29 +311,7 @@ const Withdrawal = () => {
             </>
           )}
 
-          <div className="bg-blue-500/20 border-2 border-blue-500 rounded-2xl p-5">
-            <p className="text-blue-400 font-bold mb-3 flex items-center gap-2">
-              <FaCheckCircle /> Important Notes:
-            </p>
-            <ul className="space-y-2 text-gray-300 text-sm">
-              <li className="flex items-start gap-2">
-                <span className="text-blue-400 mt-1">•</span>
-                <span>Withdrawal will be processed within 24-48 hours</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-400 mt-1">•</span>
-                <span>Amount will be deducted from your winning balance immediately</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-400 mt-1">•</span>
-                <span>If rejected, amount will be refunded to your winning balance</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-400 mt-1">•</span>
-                <span>Ensure all details are correct to avoid delays</span>
-              </li>
-            </ul>
-          </div>
+          
 
           <button
             type="submit"

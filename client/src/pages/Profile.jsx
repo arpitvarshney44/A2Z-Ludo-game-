@@ -189,13 +189,13 @@ const Profile = () => {
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-3xl p-6 mb-6 text-center shadow-lg"
+        className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-2xl p-4 mb-4 text-center shadow-md"
       >
-        <div className="relative inline-block mb-3">
+        <div className="relative inline-block mb-2">
           <img
             src={user?.avatar || 'https://via.placeholder.com/100'}
             alt="Avatar"
-            className="w-24 h-24 rounded-full border-4 border-white shadow-xl object-cover mx-auto"
+            className="w-20 h-20 rounded-full border-4 border-white shadow-xl object-cover mx-auto"
           />
           <input
             type="file"
@@ -207,31 +207,31 @@ const Profile = () => {
           <button
             onClick={() => avatarInputRef.current?.click()}
             disabled={uploadingAvatar}
-            className="absolute bottom-0 right-0 bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-blue-600 transition-all shadow-lg disabled:opacity-50"
+            className="absolute bottom-0 right-0 bg-blue-500 text-white w-7 h-7 rounded-full flex items-center justify-center hover:bg-blue-600 transition-all shadow-lg disabled:opacity-50"
           >
             {uploadingAvatar ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+              <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent"></div>
             ) : (
-              <FaCamera className="text-sm" />
+              <FaCamera className="text-xs" />
             )}
           </button>
         </div>
         
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <span className="text-red-500 text-2xl">💎</span>
+        <div className="flex items-center justify-center gap-2 mb-1">
+          <span className="text-red-500 text-xl">💎</span>
           {isEditingUsername ? (
             <div className="flex items-center gap-2">
               <input
                 type="text"
                 value={editedUsername}
                 onChange={(e) => setEditedUsername(e.target.value)}
-                className="bg-white/20 border-2 border-white/40 rounded-lg px-3 py-1 text-white text-xl font-bold outline-none focus:border-blue-400"
+                className="bg-white/20 border-2 border-white/40 rounded-lg px-2 py-1 text-white text-lg font-bold outline-none focus:border-blue-400"
                 autoFocus
               />
               <button
                 onClick={handleUpdateUsername}
                 disabled={loading}
-                className="text-green-400 text-xl hover:scale-110 transition-all"
+                className="text-green-400 text-lg hover:scale-110 transition-all"
               >
                 <FaSave />
               </button>
@@ -240,19 +240,19 @@ const Profile = () => {
                   setIsEditingUsername(false);
                   setEditedUsername(user?.username || '');
                 }}
-                className="text-red-400 text-xl hover:scale-110 transition-all"
+                className="text-red-400 text-lg hover:scale-110 transition-all"
               >
                 <FaTimes />
               </button>
             </div>
           ) : (
             <>
-              <h2 className="text-2xl font-black text-white">
+              <h2 className="text-xl font-black text-white">
                 {user?.username || 'User'}
               </h2>
               <button
                 onClick={() => setIsEditingUsername(true)}
-                className="text-blue-400 text-xl hover:scale-110 transition-all"
+                className="text-blue-400 text-lg hover:scale-110 transition-all"
               >
                 <FaEdit />
               </button>
@@ -262,22 +262,22 @@ const Profile = () => {
       </motion.div>
 
       {/* Complete Profile Section */}
-      <div className="mb-6">
-        <h3 className="text-gray-800 font-bold text-xl mb-4">Complete Profile</h3>
+      <div className="mb-4">
+        <h3 className="text-gray-800 font-bold text-base mb-3">Complete Profile</h3>
         
         {/* Mobile Number */}
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.1 }}
-          className="bg-white rounded-2xl p-4 mb-3 shadow-lg flex items-center gap-4"
+          className="bg-white rounded-xl p-3 mb-2 shadow-md flex items-center gap-3"
         >
-          <div className="w-14 h-14 bg-black rounded-2xl flex items-center justify-center flex-shrink-0">
-            <FaPhone className="text-blue-400 text-2xl" />
+          <div className="w-12 h-12 bg-black rounded-xl flex items-center justify-center flex-shrink-0">
+            <FaPhone className="text-blue-400 text-xl" />
           </div>
           <div className="flex-1">
-            <p className="text-gray-600 text-sm font-semibold">Mobile Number</p>
-            <p className="text-gray-800 font-bold text-lg">{user?.phoneNumber}</p>
+            <p className="text-gray-600 text-xs font-semibold">Mobile Number</p>
+            <p className="text-gray-800 font-bold text-base">{user?.phoneNumber}</p>
           </div>
         </motion.div>
 
@@ -286,23 +286,23 @@ const Profile = () => {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.15 }}
-          className="bg-white rounded-2xl p-4 mb-3 shadow-lg flex items-center gap-4"
+          className="bg-white rounded-xl p-3 mb-2 shadow-md flex items-center gap-3"
         >
-          <div className="w-14 h-14 bg-blue-500 rounded-2xl flex items-center justify-center flex-shrink-0">
-            <FaEnvelope className="text-white text-2xl" />
+          <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center flex-shrink-0">
+            <FaEnvelope className="text-white text-xl" />
           </div>
           <div className="flex-1">
-            <p className="text-gray-600 text-sm font-semibold">Email Address</p>
+            <p className="text-gray-600 text-xs font-semibold">Email Address</p>
             {isEditingEmail ? (
               <input
                 type="email"
                 value={editedEmail}
                 onChange={(e) => setEditedEmail(e.target.value)}
-                className="bg-gray-100 border-2 border-blue-300 rounded-lg px-3 py-1 text-gray-800 font-bold text-lg outline-none focus:border-blue-500 w-full"
+                className="bg-gray-100 border-2 border-blue-300 rounded-lg px-2 py-1 text-gray-800 font-bold text-base outline-none focus:border-blue-500 w-full"
                 autoFocus
               />
             ) : (
-              <p className="text-gray-800 font-bold text-lg">{user?.email || 'Not set'}</p>
+              <p className="text-gray-800 font-bold text-base">{user?.email || 'Not set'}</p>
             )}
           </div>
           {isEditingEmail ? (
@@ -310,7 +310,7 @@ const Profile = () => {
               <button
                 onClick={handleUpdateEmail}
                 disabled={loading}
-                className="text-green-500 text-2xl hover:scale-110 transition-all"
+                className="text-green-500 text-xl hover:scale-110 transition-all"
               >
                 <FaSave />
               </button>
@@ -319,7 +319,7 @@ const Profile = () => {
                   setIsEditingEmail(false);
                   setEditedEmail(user?.email || '');
                 }}
-                className="text-red-500 text-2xl hover:scale-110 transition-all"
+                className="text-red-500 text-xl hover:scale-110 transition-all"
               >
                 <FaTimes />
               </button>
@@ -327,7 +327,7 @@ const Profile = () => {
           ) : (
             <button
               onClick={() => setIsEditingEmail(true)}
-              className="text-purple-500 text-2xl hover:scale-110 transition-all"
+              className="text-purple-500 text-xl hover:scale-110 transition-all"
             >
               <FaEdit />
             </button>
@@ -335,35 +335,35 @@ const Profile = () => {
         </motion.div>
       </div>
 
-      {/* KYC Verification */}
+      {/* KYC Verification 
       <Link to="/kyc">
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-3xl p-6 mb-6 text-center shadow-lg hover:scale-105 transition-transform"
+          className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-4 mb-4 text-center shadow-md hover:scale-105 transition-transform"
         >
-          <div className="text-5xl mb-3">🆔</div>
-          <h3 className="text-white font-black text-2xl">KYC VERIFICATION</h3>
+          <div className="text-4xl mb-2">🆔</div>
+          <h3 className="text-white font-black text-lg">KYC VERIFICATION</h3>
         </motion.div>
-      </Link>
+      </Link> */}
 
       {/* Referral Code Section */}
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.25 }}
-        className="mb-6"
+        className="mb-4"
       >
-        <h3 className="text-gray-800 font-bold text-xl mb-4">
+        <h3 className="text-gray-800 font-bold text-base mb-3">
           {user?.referredBy ? 'Applied Referral Code' : 'Use Refer Code'}
         </h3>
         {user?.referredBy ? (
-          <div className="bg-gradient-to-r from-green-50 to-green-100 border-2 border-green-300 rounded-2xl px-4 py-4 flex items-center gap-3">
-            <FaCheckCircle className="text-green-600 text-2xl flex-shrink-0" />
+          <div className="bg-gradient-to-r from-green-50 to-green-100 border-2 border-green-300 rounded-xl px-3 py-3 flex items-center gap-2">
+            <FaCheckCircle className="text-green-600 text-xl flex-shrink-0" />
             <div className="flex-1">
-              <p className="text-gray-600 text-sm font-medium">Referral Code Applied</p>
-              <p className="text-gray-800 font-bold text-xl">{user.referredBy}</p>
+              <p className="text-gray-600 text-xs font-medium">Referral Code Applied</p>
+              <p className="text-gray-800 font-bold text-base">{user.referredBy}</p>
             </div>
           </div>
         ) : (
@@ -373,35 +373,35 @@ const Profile = () => {
               value={referCode}
               onChange={(e) => setReferCode(e.target.value.toUpperCase())}
               placeholder="Enter Refer Code"
-              className="flex-1 bg-white border-2 border-gray-300 rounded-2xl px-4 py-3 text-gray-800 font-semibold outline-none focus:border-blue-500 transition-all"
+              className="flex-1 bg-white border-2 border-gray-300 rounded-xl px-3 py-2.5 text-gray-800 font-semibold outline-none focus:border-blue-500 transition-all text-sm"
             />
             <button
               onClick={handleSubmitReferCode}
-              className="bg-green-100 border-2 border-green-300 w-14 h-14 rounded-2xl flex items-center justify-center hover:scale-105 transition-all flex-shrink-0"
+              className="bg-green-100 border-2 border-green-300 w-12 h-12 rounded-xl flex items-center justify-center hover:scale-105 transition-all flex-shrink-0"
             >
-              <FaCheckCircle className="text-green-600 text-2xl" />
+              <FaCheckCircle className="text-green-600 text-xl" />
             </button>
           </div>
         )}
       </motion.div>
 
       {/* Other Details */}
-      <div className="mb-6">
-        <h3 className="text-gray-800 font-bold text-xl mb-4">Other Details</h3>
+      <div className="mb-4">
+        <h3 className="text-gray-800 font-bold text-base mb-3">Other Details</h3>
         
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           {/* Referral Earning */}
           <motion.div
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ delay: 0.3 }}
-            className="bg-gradient-to-br from-orange-400 to-orange-500 rounded-3xl p-6 text-center shadow-lg"
+            className="bg-gradient-to-br from-orange-400 to-orange-500 rounded-2xl p-4 text-center shadow-md"
           >
-            <div className="w-12 h-12 bg-white/30 rounded-xl flex items-center justify-center mx-auto mb-3">
-              <span className="text-2xl">🎁</span>
+            <div className="w-10 h-10 bg-white/30 rounded-lg flex items-center justify-center mx-auto mb-2">
+              <span className="text-xl">🎁</span>
             </div>
-            <h4 className="text-white font-bold text-lg mb-2">Referral Earning</h4>
-            <p className="text-white font-black text-3xl">{user?.referralEarnings || 0}</p>
+            <h4 className="text-white font-bold text-xs mb-1.5">Referral Earning</h4>
+            <p className="text-white font-black text-2xl">{user?.referralEarnings || 0}</p>
           </motion.div>
 
           {/* Battle Played */}
@@ -409,13 +409,13 @@ const Profile = () => {
             initial={{ x: 20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ delay: 0.3 }}
-            className="bg-gradient-to-br from-cyan-400 to-green-400 rounded-3xl p-6 text-center shadow-lg"
+            className="bg-gradient-to-br from-cyan-400 to-green-400 rounded-2xl p-4 text-center shadow-md"
           >
-            <div className="w-12 h-12 bg-white/30 rounded-xl flex items-center justify-center mx-auto mb-3">
-              <span className="text-2xl">⚔️</span>
+            <div className="w-10 h-10 bg-white/30 rounded-lg flex items-center justify-center mx-auto mb-2">
+              <span className="text-xl">⚔️</span>
             </div>
-            <h4 className="text-white font-bold text-lg mb-2">Battle Played</h4>
-            <p className="text-white font-black text-3xl">{user?.totalGamesPlayed || 0}</p>
+            <h4 className="text-white font-bold text-xs mb-1.5">Battle Played</h4>
+            <p className="text-white font-black text-2xl">{user?.totalGamesPlayed || 0}</p>
           </motion.div>
 
           {/* Coin Won */}
@@ -423,13 +423,13 @@ const Profile = () => {
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ delay: 0.35 }}
-            className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-3xl p-6 text-center shadow-lg"
+            className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-4 text-center shadow-md"
           >
-            <div className="w-12 h-12 bg-white/30 rounded-xl flex items-center justify-center mx-auto mb-3">
-              <span className="text-2xl">🪙</span>
+            <div className="w-10 h-10 bg-white/30 rounded-lg flex items-center justify-center mx-auto mb-2">
+              <span className="text-xl">🪙</span>
             </div>
-            <h4 className="text-white font-bold text-lg mb-2">Coin Won</h4>
-            <p className="text-white font-black text-3xl">{user?.totalCoinsWon || 0}</p>
+            <h4 className="text-white font-bold text-xs mb-1.5">Coin Won</h4>
+            <p className="text-white font-black text-2xl">{user?.totalCoinsWon || 0}</p>
           </motion.div>
 
           {/* Total Withdrawal */}
@@ -437,13 +437,13 @@ const Profile = () => {
             initial={{ x: 20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ delay: 0.35 }}
-            className="bg-gradient-to-br from-purple-400 to-pink-500 rounded-3xl p-6 text-center shadow-lg"
+            className="bg-gradient-to-br from-purple-400 to-pink-500 rounded-2xl p-4 text-center shadow-md"
           >
-            <div className="w-12 h-12 bg-white/30 rounded-xl flex items-center justify-center mx-auto mb-3">
-              <span className="text-2xl">💰</span>
+            <div className="w-10 h-10 bg-white/30 rounded-lg flex items-center justify-center mx-auto mb-2">
+              <span className="text-xl">💰</span>
             </div>
-            <h4 className="text-white font-bold text-lg mb-2">Total Withdrawal</h4>
-            <p className="text-white font-black text-3xl">{user?.totalWithdrawal || 0}</p>
+            <h4 className="text-white font-bold text-xs mb-1.5">Total Withdrawal</h4>
+            <p className="text-white font-black text-2xl">{user?.totalWithdrawal || 0}</p>
           </motion.div>
         </div>
       </div>
@@ -454,7 +454,7 @@ const Profile = () => {
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.4 }}
         onClick={handleLogout}
-        className="w-full bg-black text-white font-bold text-xl py-4 rounded-2xl flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-lg"
+        className="w-full bg-black text-white font-bold text-base py-3 rounded-xl flex items-center justify-center gap-2 hover:scale-105 transition-all shadow-md"
       >
         Log Out
       </motion.button>

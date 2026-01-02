@@ -29,7 +29,7 @@ const Layout = () => {
     { path: '/deposits', icon: FaDownload, label: 'Deposits' },
     { path: '/withdrawals', icon: FaUpload, label: 'Withdrawals' },
     { path: '/games', icon: FaGamepad, label: 'Games' },
-    { path: '/kyc', icon: FaIdCard, label: 'KYC' },
+  //  { path: '/kyc', icon: FaIdCard, label: 'KYC' },
     { path: '/support', icon: FaHeadset, label: 'Support' },
     { path: '/reports', icon: FaChartLine, label: 'Reports' },
   ];
