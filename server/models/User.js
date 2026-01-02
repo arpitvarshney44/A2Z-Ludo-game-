@@ -17,14 +17,12 @@ const userSchema = new mongoose.Schema({
     type: String,
     trim: true,
     lowercase: true,
-    default: null,
     sparse: true,
     index: { unique: true, sparse: true }
   },
   username: {
     type: String,
     trim: true,
-    default: null,
     sparse: true,
     index: { unique: true, sparse: true }
   },

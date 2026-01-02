@@ -9,7 +9,9 @@
     "start": "node server.js",
     "create-admin": "node scripts/createAdmin.js",
     "create-user": "node scripts/createTestUser.js",
-    "create-users": "node scripts/createTestUser.js"
+    "create-users": "node scripts/createTestUser.js",
+    "fix-indexes": "node scripts/fixEmailIndex.js",
+    "cleanup-nulls": "node scripts/cleanupNullEmails.js"
   },
   "keywords": [],
   "author": "",
